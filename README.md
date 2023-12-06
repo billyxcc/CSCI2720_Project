@@ -1,8 +1,14 @@
 # CSCI2720_Project
-## 
+## StepUp
 cd 
+
 npm inint
+
 npm install express mongoose
 
-node server.js to start server
-npm start to start client
+## Start the server
+
+node server.js 
+
+## Start the Client
+npm start 
