@@ -1,4 +1,8 @@
 # CSCI2720_Project
-## Data source
+## 
+cd 
+npm inint
+npm install express mongoose
 
-Cultural Programmes https://data.gov.hk/en-data/dataset/hk-lcsd-event-event-cultural
+node server.js to start server
+npm start to start client
