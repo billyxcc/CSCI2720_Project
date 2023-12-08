@@ -393,4 +393,4 @@ class NoMatch extends React.Component{
 
 
 const root = ReactDOM.createRoot(document.querySelector("#app"));
-root.render( <App name="CUHK pictures"  />);
+root.render( <App name="Project"  />);
