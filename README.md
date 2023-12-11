@@ -1,6 +1,6 @@
 # CSCI2720_Project
 ## StepUp
-cd 
+cd C_Project
 
 npm init
 
