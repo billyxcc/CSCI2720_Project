@@ -420,7 +420,9 @@ class LocationsList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      locations: []
+      locations: [],
+      sortAscending: true,
+      searchKeyword: '',
     };
   }
 
@@ -446,28 +448,64 @@ class LocationsList extends React.Component {
       .catch(error => console.error(error));
   }
 
+  handleSortClick = () => {
+    const sortedLocations = this.state.locations.sort((a, b) => {
+      if (this.state.sortAscending) {
+        return a.events.length - b.events.length;
+      } else {
+        return b.events.length - a.events.length;
+      }
+    });
+
+    this.setState({
+      locations: sortedLocations,
+      sortAscending: !this.state.sortAscending,
+    });
+  };
+
+  handleSearchChange = (event) => {
+    this.setState({ searchKeyword: event.target.value });
+  };
+
   render() {
+    const filteredLocations = this.state.locations.filter(location =>
+      location.name.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
+    );
+
     return (
-      <table className="table table-striped table-hover">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Latitude</th>
-            <th>Longitude</th>
-            <th>Events</th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.state.locations.map(location => (
-            <tr key={location.locId}>
-              <td>{location.name}</td>
-              <td>{location.latitude}</td>
-              <td>{location.longitude}</td>
-              <td>{location.events}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="container">
+        <div className="row">
+          <div className="row mt-3">
+            <div className="col">
+              <input type="text" className="form-control" value={this.state.searchKeyword} onChange={this.handleSearchChange} placeholder="Search locations..." />
+            </div>
+          </div>
+        </div>
+        <div className="row mt-3">
+          <div className="col">
+            <table className="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th style={{ width: '50%' }}>Name</th>
+                  <th style={{ width: '20%' }}>Latitude</th>
+                  <th style={{ width: '20%' }}>Longitude</th>
+                  <th style={{ width: '10%' }} onClick={this.handleSortClick}>Events</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLocations.map(location => (
+                  <tr key={location.locId}>
+                    <td><a href={`/locations/${location.locId}`}>{location.name}</a></td>
+                    <td>{location.latitude}</td>
+                    <td>{location.longitude}</td>
+                    <td>{location.events}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     );
   }
 }

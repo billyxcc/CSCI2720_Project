@@ -102,17 +102,17 @@ db.once('open', function () {
   const Location = mongoose.model("Location", LocationSchema);
   const Event = mongoose.model("Event", EventSchema);
 
-  app.get("/locations", (req, res) => {
-    Location.find({})
-      .sort({ events: -1 }) // sort by the number of events in descending order
-      .then((locations) => {
-        res.json(locations);
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send("Error occurred while fetching locations");
-      });
-  });
+  // app.get("/locations", (req, res) => {
+  //   Location.find({})
+  //     .sort({ events: -1 }) // sort by the number of events in descending order
+  //     .then((locations) => {
+  //       res.json(locations);
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //       res.status(500).send("Error occurred while fetching locations");
+  //     });
+  // });
 
   //load current
   app.get("/load", (req, res) => {
