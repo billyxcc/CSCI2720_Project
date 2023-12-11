@@ -10,7 +10,7 @@
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "mongodb": "^6.3.0",
-    "mongoose": "^8.0.2",
+    "mongoose": "^8.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
@@ -40,5 +40,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "cd",
+  "main": "server.js",
+  "author": "",
+  "license": "ISC"
 }
