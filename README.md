@@ -2,7 +2,7 @@
 ## StepUp
 cd 
 
-npm inint
+npm init
 
 npm install express mongoose
 
