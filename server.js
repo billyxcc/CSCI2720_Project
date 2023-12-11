@@ -6,7 +6,7 @@ app.use(cors());
 app.use(express.json());
 
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://127.0.0.1:27017/myDatabase'); 
+mongoose.connect('mongodb://127.0.0.1:27017/myDatabase');
 
 const db = mongoose.connection;
 // Upon connection failure
@@ -25,14 +25,14 @@ db.once('open', function () {
       type: String,
       required: true,
     },
-    favourite_locations:{
-        type: Array,
-        required: false,
+    favourite_locations: {
+      type: Array,
+      required: false,
     },
     Current_login: {
-        type: Boolean,
-        required: true,
-      },
+      type: Boolean,
+      required: true,
+    },
   });
   const AdminSchema = mongoose.Schema({
     UserName: {
@@ -45,59 +45,126 @@ db.once('open', function () {
     },
   });
 
+  const LocationSchema = mongoose.Schema({
+    locId: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    latitude: {
+      type: Number,
+      required: true,
+    },
+    longitude: {
+      type: Number,
+      required: true,
+    },
+  });
+
+  const EventSchema = mongoose.Schema({
+    eventId: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    location: {
+      type: Schema.Types.ObjectId, ref: 'Location',
+      required: true,
+    },
+    dateTime: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    presenter: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+  });
+
   const User = mongoose.model("User", UserSchema);
   const Admin = mongoose.model("Admin", AdminSchema);
+  const Location = mongoose.model("Location", LocationSchema);
+  const Event = mongoose.model("Event", EventSchema);
+
+  app.get("/locations", (req, res) => {
+    Location.find({})
+      .sort({ events: -1 }) // sort by the number of events in descending order
+      .then((locations) => {
+        res.json(locations);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while fetching locations");
+      });
+  });
 
   //load current
-  app.get("/load", (req,res)=>{
- 
-    User.find({ Current_login:{ $eq: "true"} })
-    .then((data)=> {
-       if(data.length==1){
-            return res.send('Valid**user**'+data[0].UserName);
-       }
-    })
-    .catch((error) => console.log(error));
+  app.get("/load", (req, res) => {
 
-    Admin.find({ Current_login:{ $eq: "true"} })
-    .then((data)=> {
-        if(data.length==1){
-            return res.send('Valid**admin**'+data[0].UserName);
-       }}
-       )
-    .catch((error) => {
-        console.log(error) 
-       });
+    User.find({ Current_login: { $eq: "true" } })
+      .then((data) => {
+        if (data.length == 1) {
+          return res.send('Valid**user**' + data[0].UserName);
+        }
+      })
+      .catch((error) => console.log(error));
+
+    Admin.find({ Current_login: { $eq: "true" } })
+      .then((data) => {
+        if (data.length == 1) {
+          return res.send('Valid**admin**' + data[0].UserName);
+        }
+      }
+      )
+      .catch((error) => {
+        console.log(error)
+      });
 
   });
-      
+
 
   //Sign-up
-  app.get("/signup", (req,res)=>{ 
+  app.get("/signup", (req, res) => {
 
-    const user_name=req.query.username;
-    const pass_word=req.query.password;
+    const user_name = req.query.username;
+    const pass_word = req.query.password;
 
-    let newUser= new User({
+    let newUser = new User({
       UserName: user_name,
       PassWord: pass_word,
       Current_login: false,
       favourite_locations: []
     });
 
-    
-    //Firstly,to check whether usename is used,if not used,create a new User's data in database.
-    User.find({UserName:{$eq:user_name}})
-    .then((data) =>{
-      if(data.length==0){
-        console.log(data.length);
 
-        newUser
-        .save()
-        .then(() => {
-          console.log("a new user account created successfully");
-          res.setHeader('Content-Type', 'text/html');
-          message = `
+    //Firstly,to check whether usename is used,if not used,create a new User's data in database.
+    User.find({ UserName: { $eq: user_name } })
+      .then((data) => {
+        if (data.length == 0) {
+          console.log(data.length);
+
+          newUser
+            .save()
+            .then(() => {
+              console.log("a new user account created successfully");
+              res.setHeader('Content-Type', 'text/html');
+              message = `
             <html>
               <head>
                 <title>sign_information</title>
@@ -113,11 +180,11 @@ db.once('open', function () {
             </script> 
             </html>
               `;
-          res.send(message);
-        })
-        .catch((error) => {
-          console.log("failed to save new user account");
-          message = `
+              res.send(message);
+            })
+            .catch((error) => {
+              console.log("failed to save new user account");
+              message = `
           <html> 
             <head>
               <title> fail_information</title>
@@ -134,13 +201,13 @@ db.once('open', function () {
             </script> 
           </html>
             `;
-          res.send(message);
-          
-        });
-      } else{
-        console.log(data.length);
-        console.log("Username is used!");
-        message = `
+              res.send(message);
+
+            });
+        } else {
+          console.log(data.length);
+          console.log("Username is used!");
+          message = `
         <html>
           <head>
             <title>fail_information</title>
@@ -157,88 +224,90 @@ db.once('open', function () {
           </script> 
         </html>
           `;
-        res.send(message);
-      }
-    })
-    .catch((err) => {
-      console.log("failed to read");
-    });
+          res.send(message);
+        }
+      })
+      .catch((err) => {
+        console.log("failed to read");
+      });
 
-   });
+  });
 
 
   //login
-  app.get("/login", (req,res)=>{ 
-    const user_name=req.query.username;
-    const pass_word=req.query.password;
-    const user_type=req.query.type;
+  app.get("/login", (req, res) => {
+    const user_name = req.query.username;
+    const pass_word = req.query.password;
+    const user_type = req.query.type;
 
-    if(user_type=='admin'){
-      Admin.find({UserName:{$eq:user_name}})
-      .then((data) =>{
-        if(data.length==1){
-          Admin.find({PassWord:{$eq:pass_word}})
-          .then((data) =>{
-            if(data.length==1){
-              res.send('Success**'+user_name+"**"+user_type);
-              //Upload current_login=true
-              Admin.findOneAndUpdate(
-                {UserName:{$eq:user_name}},
-                {Current_login: "true"},
-                {New: true},
-            )
-            .then((data) =>{console.log('the updated data is:', data)})
-            .catch((error) =>console.log(error));
-            }else{
-              res.send("Failed**Invalid password");
-            }
-          })
-          .catch((error) => console.log(error));
-        }else{
-          res.send("Failed**Invalid Username");
-        }})
-      .catch((error) => console.log(error));
-    }else if(user_type=='user'){
-      User.find({UserName:{$eq:user_name}})
-      .then((data) =>{
-        if(data.length==1){
-          User.find({PassWord:{$eq:pass_word}})
-          .then((data) =>{
-            if(data.length==1){
-              res.send('Success**'+user_name+"**"+user_type);
-              //update
-                User.findOneAndUpdate(
-                    {UserName:{$eq:user_name}},
-                    {Current_login: "true"},
-                    {New: true},
-                )
+    if (user_type == 'admin') {
+      Admin.find({ UserName: { $eq: user_name } })
+        .then((data) => {
+          if (data.length == 1) {
+            Admin.find({ PassWord: { $eq: pass_word } })
+              .then((data) => {
+                if (data.length == 1) {
+                  res.send('Success**' + user_name + "**" + user_type);
+                  //Upload current_login=true
+                  Admin.findOneAndUpdate(
+                    { UserName: { $eq: user_name } },
+                    { Current_login: "true" },
+                    { New: true },
+                  )
+                    .then((data) => { console.log('the updated data is:', data) })
+                    .catch((error) => console.log(error));
+                } else {
+                  res.send("Failed**Invalid password");
+                }
+              })
+              .catch((error) => console.log(error));
+          } else {
+            res.send("Failed**Invalid Username");
+          }
+        })
+        .catch((error) => console.log(error));
+    } else if (user_type == 'user') {
+      User.find({ UserName: { $eq: user_name } })
+        .then((data) => {
+          if (data.length == 1) {
+            User.find({ PassWord: { $eq: pass_word } })
+              .then((data) => {
+                if (data.length == 1) {
+                  res.send('Success**' + user_name + "**" + user_type);
+                  //update
+                  User.findOneAndUpdate(
+                    { UserName: { $eq: user_name } },
+                    { Current_login: "true" },
+                    { New: true },
+                  )
 
-                .then((data) =>{console.log('the updated data is:', data)})
-                .catch((error) =>console.log(error));
-            }else{
-              res.send("Failed**Invalid password");
-            }
-          })
-          .catch((error) => console.log(error));
-        }else{
-          res.send("Failed**Invalid Username");
-        }})
-      .catch((error) => console.log(error));
+                    .then((data) => { console.log('the updated data is:', data) })
+                    .catch((error) => console.log(error));
+                } else {
+                  res.send("Failed**Invalid password");
+                }
+              })
+              .catch((error) => console.log(error));
+          } else {
+            res.send("Failed**Invalid Username");
+          }
+        })
+        .catch((error) => console.log(error));
     }
   });
-  
+
   //log out
-  app.get("/logout", (req,res)=>{
-    const User_Name=req.query.username;
-    const Type=req.query.type;
+  app.get("/logout", (req, res) => {
+    const User_Name = req.query.username;
+    const Type = req.query.type;
 
     User.findOneAndUpdate(
-        {Current_login:{ $eq: "true"}},
-        {Current_login: "false"},
-        {New: true},
+      { Current_login: { $eq: "true" } },
+      { Current_login: "false" },
+      { New: true },
     )
-    .then((data)=> {
-        let msg=`
+      .then((data) => {
+        let msg = `
         <html>
           <head>
             <title>logout_information</title>
@@ -254,12 +323,12 @@ db.once('open', function () {
         </html>
           `
         res.send(msg);
-    })
-    .catch((error) =>console.log(error));
+      })
+      .catch((error) => console.log(error));
 
 
 
   });
 });
 
-  const server = app.listen(80);
+const server = app.listen(80);
