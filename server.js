@@ -61,10 +61,7 @@ db.once('open', function () {
     longitude: {
       type: Number,
     },
-    events: {
-      type: Number,
-      required: true,
-    }
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }]
   });
 
   const EventSchema = mongoose.Schema({
@@ -114,7 +111,7 @@ db.once('open', function () {
           name: location.venuee[0],
           latitude: location.latitude[0] ? location.latitude[0] : null,
           longitude: location.longitude[0] ? location.longitude[0] : null,
-          events: 0,
+          events: [],
         });
         newLocation
           .save()
@@ -147,6 +144,16 @@ db.once('open', function () {
             });
             newEvent
               .save()
+              .then((event) => {
+                // after saving the event, add its id to the location's events array
+                if (!location.events.includes(event._id)) {
+                  return Location.findOneAndUpdate(
+                    { _id: event.location },
+                    { $push: { events: event._id } },
+                    { new: true },
+                  );
+                }
+              })
               .then(() => {
                 console.log("a new event is saved successfully");
               })
@@ -161,17 +168,36 @@ db.once('open', function () {
     });
   });
 
-  // app.get("/locations", (req, res) => {
-  //   Location.find({})
-  //     .sort({ events: -1 }) // sort by the number of events in descending order
-  //     .then((locations) => {
-  //       res.json(locations);
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //       res.status(500).send("Error occurred while fetching locations");
-  //     });
-  // });
+  app.get("/user/locations", (req, res) => {
+    Location.find({})
+      .sort({ events: -1 }) // sort by the number of events in descending order
+      .then((locations) => {
+        // Add a new field 'count' to each location
+        const locationsWithCount = locations.map(location => ({
+          ...location._doc,
+          count: location.events.length,
+        }));
+        res.json(locationsWithCount);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while fetching locations");
+      });
+  });
+
+  app.get("/user/locations/:id", (req, res) => {
+    console.log("get location");
+    const id = req.params.id;
+    Location.findOne({ locId: id })
+      .populate('events')
+      .then((location) => {
+        res.json(location);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while fetching location");
+      });
+  });
 
   //load current
   app.get("/load", (req, res) => {

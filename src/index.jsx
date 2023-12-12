@@ -85,8 +85,8 @@ class App extends React.Component {
             <Route exact path="/signup" element={<Sign_up />} />
             <Route exact path="/user" element={<User value={this.state.current_usertype} />} />
             <Route exact path="/admin" element={<Admin value={this.state.current_usertype} />} />
-            <Route exact path="/locations" element={<LocationsList />} />
-            <Route path="/locations/:locationId" element={<Location />} />
+            <Route exact path="/user/locations" element={<LocationsList />} />
+            <Route exact path="/user/locations/:locationId" element={<Location />} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
@@ -364,7 +364,7 @@ class User extends React.Component {
               <a className={`nav-link ${this.state.activeLink === 'Active' ? 'active' : ''}`} aria-current="page" href="#" onClick={this.handleActiveClick}>Active</a>
             </li>
             <li className="nav-item">
-              <a className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} href="#" onClick={this.handleActions1Click}>actions 1</a>
+              <a className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} href="/user/locations" onClick={this.handleActions1Click}>actions 1</a>
             </li>
             <li className="nav-item">
               <a className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} href="#" onClick={this.handleActions2Click}>actions 2</a>
@@ -428,49 +428,18 @@ class LocationsList extends React.Component {
     };
   }
 
-  componentDidMount() {
-    Promise.all([
-      fetch('venues.xml').then(response => response.text()),
-      fetch('events.xml').then(response => response.text()),
-    ])
-      .then(([venuesData, eventsData]) => {
-        const parser = new DOMParser();
-        const venuesXml = parser.parseFromString(venuesData, "text/xml");
-        console.log(venuesXml);
-        const eventsXml = parser.parseFromString(eventsData, "text/xml");
-
-        const venues = Array.from(venuesXml.getElementsByTagName('venue'));
-        console.log(venues);
-        const events = Array.from(eventsXml.getElementsByTagName('event'));
-
-        const eventCounts = events.reduce((counts, event) => {
-          const venueId = event.getElementsByTagName('venueid')[0].textContent;
-          counts[venueId] = (counts[venueId] || 0) + 1;
-          return counts;
-        }, {});
-
-        const locations = venues.map(venue => {
-          const locId = venue.getAttribute('id');
-          return {
-            locId,
-            name: venue.getElementsByTagName('venuee')[0].textContent,
-            latitude: venue.getElementsByTagName('latitude')[0].textContent,
-            longitude: venue.getElementsByTagName('longitude')[0].textContent,
-            events: eventCounts[locId] || 0,
-          };
-        });
-
-        this.setState({ locations });
-      })
-      .catch(error => console.error(error));
+  async componentDidMount() {
+    const response = await fetch('http://localhost:80/user/locations');
+    const locations = await response.json();
+    this.setState({ locations });
   }
 
   handleSortClick = () => {
     const sortedLocations = [...this.state.locations].sort((a, b) => {
       if (this.state.sortAscending) {
-        return a.events - b.events;
+        return a.events.length - b.events.length;
       } else {
-        return b.events - a.events;
+        return b.events.length - a.events.length;
       }
     });
 
@@ -514,10 +483,10 @@ class LocationsList extends React.Component {
               <tbody>
                 {filteredLocations.map(location => (
                   <tr key={location.locId}>
-                    <td><a href={`/locations/${location.locId}`}>{location.name}</a></td>
+                    <td><a href={`/user/locations/${location.locId}`}>{location.name}</a></td>
                     <td>{location.latitude}</td>
                     <td>{location.longitude}</td>
-                    <td>{location.events}</td>
+                    <td>{location.events.length}</td>
                   </tr>
                 ))}
               </tbody>
@@ -529,143 +498,85 @@ class LocationsList extends React.Component {
   }
 }
 
-export default LocationsList;
+function Location({ match }) {
+  const [location, setLocation] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const { locationId } = useParams();
 
-/*
-A separate view for one single location, containing:
-a. A map showing the location.
-b. The location details.
-c. User comments, where users can add new comments seen by all other users.
-*/
-class Location extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      location: null,
-      comments: [],
-      newComment: '',
+  useEffect(() => {
+    const fetchLocation = async () => {
+      const response = await fetch(`http://localhost:80/user/locations/${locationId}`);
+      const location = await response.json();
+      setLocation(location);
     };
-  }
+  
+    fetchLocation();
+  }, [locationId]);
 
-  componentDidMount() {
-    // const { locationId } = this.props.match.params;
-
-    const locationId = "50110014";
-
-    Promise.all([
-      fetch('../venues.xml').then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.text();
-      }),
-      fetch('../events.xml').then(response => response.text()),
-      fetch('comments.xml').then(response => response.text()),
-    ])
-      .then(([venuesData, eventsData, commentsData]) => {
-        const parser = new DOMParser();
-        const venuesXml = parser.parseFromString(venuesData, "text/xml");
-        const eventsXml = parser.parseFromString(eventsData, "text/xml");
-        const commentsXml = parser.parseFromString(commentsData, "text/xml");
-
-        const venues = Array.from(venuesXml.getElementsByTagName('venue'));
-        const events = Array.from(eventsXml.getElementsByTagName('event'));
-        const comments = Array.from(commentsXml.getElementsByTagName('comment'));
-
-        const location = venues.find(venue => venue.getAttribute('id') === locationId);
-        const locationEvents = events.filter(event => event.getElementsByTagName('venueid')[0].textContent === locationId);
-        const locationComments = comments.filter(comment => comment.getElementsByTagName('venueid')[0].textContent === locationId);
-
-        this.setState({
-          location: {
-            name: location.getElementsByTagName('venuee')[0]?.textContent,
-            latitude: location.getElementsByTagName('latitude')[0]?.textContent,
-            longitude: location.getElementsByTagName('longitude')[0]?.textContent,
-            events: locationEvents.map(event => ({
-              id: event.getAttribute('id'),
-              name: event.getElementsByTagName('titlee')[0]?.textContent,
-              date: event.getElementsByTagName('predateE')[0]?.textContent,
-            })),
-          },
-          comments: locationComments.map(comment => ({
-            id: comment.getElementsByTagName('commentid')[0]?.textContent,
-            username: comment.getElementsByTagName('username')[0]?.textContent,
-            text: comment.getElementsByTagName('commenttext')[0]?.textContent,
-          })),
-        });
-      })
-      .catch(error => console.error(error));
-  }
-
-  handleCommentChange = (event) => {
-    this.setState({ newComment: event.target.value });
+  const handleCommentChange = (event) => {
+    setNewComment(event.target.value);
   };
 
-  handleCommentSubmit = (event) => {
+  const handleCommentSubmit = (event) => {
     event.preventDefault();
 
-    const newComment = {
+    const newCommentObj = {
       id: Math.random().toString(36).substring(2, 11),
       username: 'Anonymous',
-      text: this.state.newComment,
+      text: newComment,
     };
 
-    this.setState({
-      comments: [...this.state.comments, newComment],
-      newComment: '',
-    });
+    setComments([...comments, newCommentObj]);
+    setNewComment('');
+  };
+
+  if (!location) {
+    return null;
   }
 
-  render() {
-    const { location, comments, newComment } = this.state;
-
-    if (!location) {
-      return null;
-    }
-
-    return (
-      <div className="container">
-        <div className="row">
-          <div className="col">
-            <h1>{location.name}</h1>
-            <p>Latitude: {location.latitude}</p>
-            <p>Longitude: {location.longitude}</p>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col">
-            <h2>Events</h2>
-            <ul>
-              {location.events.map(event => (
-                <li key={event.id}>
-                  <a href={`/events/${event.id}`}>{event.name}</a> ({event.date})
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col">
-            <h2>Comments</h2>
-            <ul>
-              {comments.map(comment => (
-                <li key={comment.id}>
-                  <strong>{comment.username}</strong>: {comment.text}
-                </li>
-              ))}
-            </ul>
-            <form onSubmit={this.handleCommentSubmit}>
-              <div className="form-group">
-                <label htmlFor="comment">New comment</label>
-                <textarea className="form-control" id="comment" rows="3" value={newComment} onChange={this.handleCommentChange}></textarea>
-              </div>
-              <button type="submit" className="btn btn-primary">Submit</button>
-            </form>
-          </div>
+  return (
+    <div className="container">
+      <div className="row">
+        <div className="col">
+          <h1>{location.name}</h1>
+          <p>Latitude: {location.latitude}</p>
+          <p>Longitude: {location.longitude}</p>
         </div>
       </div>
-    );
-  }
+      <div className="row">
+        <div className="col">
+          <h2>Events</h2>
+          <ul>
+            {location.events.map(event => (
+              <li key={event.eventId}>
+                <a href={`/events/${event.eventId}`}>{event.title}</a> ({event.dateTime})
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="row">
+        <div className="col">
+          <h2>Comments</h2>
+          <ul>
+            {comments.map(comment => (
+              <li key={comment.id}>
+                <strong>{comment.username}</strong>: {comment.text}
+              </li>
+            ))}
+          </ul>
+          <form onSubmit={handleCommentSubmit}>
+            <div className="form-group">
+              <label htmlFor="comment">New comment</label>
+              <textarea className="form-control" id="comment" rows="3" value={newComment} onChange={handleCommentChange}></textarea>
+            </div>
+            <button type="submit" className="btn btn-primary">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 class NoMatch extends React.Component {
