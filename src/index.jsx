@@ -688,10 +688,15 @@ function Event({ match }) {
       <div className="row">
         <div className="col">
           <h1>{event.title}</h1>
-          <p>{event.location}</p>
+          <h5>location</h5>
+          <p><a href={`/user/locations/${event.location.locId}`}>{event.location.name}</a></p>
+          <h5>description</h5>
           <p>{event.description}</p>
+          <h5>date & time</h5>
           <p>{event.dateTime}</p>
+          <h5>presenter</h5>
           <p>{event.presenter}</p>
+          <h5>price</h5>
           <p>{event.price}</p>
         </div>
       </div>
