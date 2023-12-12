@@ -186,7 +186,6 @@ db.once('open', function () {
   });
 
   app.get("/user/locations/:id", (req, res) => {
-    console.log("get location");
     const id = req.params.id;
     Location.findOne({ locId: id })
       .populate('events')
@@ -196,6 +195,31 @@ db.once('open', function () {
       .catch((error) => {
         console.error(error);
         res.status(500).send("Error occurred while fetching location");
+      });
+  });
+
+  app.get("/user/events", (req, res) => {
+    Event.find({})
+      .populate('location')
+      .then((events) => {
+        res.json(events);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while fetching events");
+      });
+  });
+
+  app.get("/user/events/:id", (req, res) => {
+    const id = req.params.id;
+    Event.findOne({ eventId: id })
+      .populate('location')
+      .then((event) => {
+        res.json(event);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while fetching event");
       });
   });
 

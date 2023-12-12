@@ -87,6 +87,8 @@ class App extends React.Component {
             <Route exact path="/admin" element={<Admin value={this.state.current_usertype} />} />
             <Route exact path="/user/locations" element={<LocationsList />} />
             <Route exact path="/user/locations/:locationId" element={<Location />} />
+            <Route exact path="/user/events" element={<EventList />} />
+            <Route exact path="/user/events/:eventId" element={<Event />} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
@@ -510,7 +512,7 @@ function Location({ match }) {
       const location = await response.json();
       setLocation(location);
     };
-  
+
     fetchLocation();
   }, [locationId]);
 
@@ -550,7 +552,7 @@ function Location({ match }) {
           <ul>
             {location.events.map(event => (
               <li key={event.eventId}>
-                <a href={`/events/${event.eventId}`}>{event.title}</a> ({event.dateTime})
+                <a href={`/user/events/${event.eventId}`}>{event.title}</a> ({event.dateTime})
               </li>
             ))}
           </ul>
@@ -573,6 +575,124 @@ function Location({ match }) {
             </div>
             <button type="submit" className="btn btn-primary">Submit</button>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+class EventList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      events: [],
+      sortAscending: true,
+      searchKeyword: '',
+    };
+  }
+
+  async componentDidMount() {
+    const response = await fetch('http://localhost:80/user/events');
+    const events = await response.json();
+    this.setState({ events });
+  }
+
+  handleSortClick = () => {
+    const sortedEvents = [...this.state.events].sort((a, b) => {
+      if (this.state.sortAscending) {
+        return a.events.length - b.events.length;
+      } else {
+        return b.events.length - a.events.length;
+      }
+    });
+
+    this.setState({
+      events: sortedEvents,
+      sortAscending: !this.state.sortAscending,
+    });
+  };
+
+  handleSearchChange = (event) => {
+    this.setState({ searchKeyword: event.target.value });
+  };
+
+  render() {
+    const filteredEvents = this.state.events.filter(event =>
+      event.title.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
+    );
+
+    return (
+      <div className="container">
+        <div className="row">
+          <div className="row mt-3">
+            <div className="col">
+              <input type="text" className="form-control" value={this.state.searchKeyword} onChange={this.handleSearchChange} placeholder="Search events..." />
+            </div>
+          </div>
+        </div>
+        <div className="row mt-3">
+          <div className="col">
+            <div className="table-responsive">
+              <table className="table table-striped table-hover" style={{ overflow: 'auto' }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Title</th>
+                    <th style={{ width: '20%' }}>Location</th>
+                    <th style={{ width: '20%' }}>Description</th>
+                    <th style={{ width: '20%' }}>Date & Time</th>
+                    <th style={{ width: '10%' }}>Presenter</th>
+                    <th style={{ width: '10%' }}>Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEvents.map(event => (
+                    <tr key={event.eventId}>
+                      <td><a href={`/user/events/${event.eventId}`}>{event.title}</a></td>
+                      <td>{event.location.name}</td>
+                      <td>{event.description}</td>
+                      <td>{event.dateTime}</td>
+                      <td>{event.presenter}</td>
+                      <td>{event.price}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+function Event({ match }) {
+  const [event, setEvent] = useState(null);
+  const { eventId } = useParams();
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const response = await fetch(`http://localhost:80/user/events/${eventId}`);
+      const event = await response.json();
+      setEvent(event);
+    };
+
+    fetchEvent();
+  }, [eventId]);
+
+  if (!event) {
+    return null;
+  }
+
+  return (
+    <div className="container">
+      <div className="row">
+        <div className="col">
+          <h1>{event.title}</h1>
+          <p>{event.location}</p>
+          <p>{event.description}</p>
+          <p>{event.dateTime}</p>
+          <p>{event.presenter}</p>
+          <p>{event.price}</p>
         </div>
       </div>
     </div>
