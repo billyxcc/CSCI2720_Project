@@ -2,6 +2,7 @@ import ReactDOM from 'react-dom/client'
 import React, { Component } from 'react';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Switch, Link, useParams } from 'react-router-dom';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 function render_fun(result) {
   document.open();
@@ -500,6 +501,7 @@ function Location({ match }) {
   const [location, setLocation] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [favouriteLocations, setFavouriteLocations] = useState([]);
   const { locationId } = useParams();
 
   useEffect(() => {
@@ -509,7 +511,14 @@ function Location({ match }) {
       setLocation(location);
     };
 
+    const fetchFavouriteLocations = async () => {
+      const response = await fetch('http://localhost:80/user/favourites');
+      const favouriteLocations = await response.json();
+      setFavouriteLocations(favouriteLocations);
+    };
+
     fetchLocation();
+    fetchFavouriteLocations();
   }, [locationId]);
 
   const handleCommentChange = (event) => {
@@ -529,6 +538,33 @@ function Location({ match }) {
     setNewComment('');
   };
 
+  const handleFavouriteClick = async () => {
+    const objectId = location._id;
+
+    if (favouriteLocations.includes(objectId)) {
+      const response = await fetch(`http://localhost:80/user/favourites/${objectId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        console.error('Failed to remove location from favourites');
+        return;
+      }
+      
+      setFavouriteLocations(favouriteLocations.filter(id => id !== objectId));
+    } else {
+      const response = await fetch(`http://localhost:80/user/favourites/${objectId}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        console.error('Failed to add location to favourites');
+      }
+
+      setFavouriteLocations([...favouriteLocations, objectId]);
+    }
+  };
+
   if (!location) {
     return null;
   }
@@ -538,8 +574,14 @@ function Location({ match }) {
       <div className="row">
         <div className="col">
           <h1>{location.name}</h1>
+          {favouriteLocations.includes(location._id) ?
+            <FaHeart onClick={handleFavouriteClick} style={{ color: 'red' }} />
+            :
+            <FaRegHeart onClick={handleFavouriteClick} />
+          }
           <p>Latitude: {location.latitude}</p>
           <p>Longitude: {location.longitude}</p>
+
         </div>
       </div>
       <div className="row">
@@ -628,7 +670,7 @@ class EventList extends React.Component {
         <div className="row">
           <div className="row mt-3">
             <div className="col">
-            <input type="text" className="form-control" value={this.state.searchKeyword || ''} onChange={this.handleSearchChange} placeholder="Search events..." />
+              <input type="text" className="form-control" value={this.state.searchKeyword || ''} onChange={this.handleSearchChange} placeholder="Search events..." />
               <input type="number" className="form-control" value={this.state.priceFilter || ''} onChange={this.handlePriceFilterChange} placeholder="Max price..." />
             </div>
           </div>
@@ -744,7 +786,7 @@ class Favourites extends React.Component {
 
   render() {
     const filteredLocations = this.state.locations.filter(location =>
-      location.name.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
+      location.name && this.state.searchKeyword && location.name.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
     );
 
     return (

@@ -231,14 +231,62 @@ db.once('open', function () {
 
   // show all favourite locations of the current user
   app.get("/user/favourites", (req, res) => {
-
     User.find({ Current_login: { $eq: "true" } })
+      .populate('favourite_locations')
       .then((data) => {
         if (data.length == 1) {
           return res.send(data[0].favourite_locations);
         }
       })
       .catch((error) => console.log(error));
+  });
+
+  // add a location to the current user's favourite locations
+  app.post("/user/favourites/:id", (req, res) => {
+    const objectId = req.params.id;
+    User.find({ Current_login: { $eq: "true" } })
+      .then((data) => {
+        if (data.length == 1) {
+          if (!data[0].favourite_locations.includes(objectId)) {
+            return User.findOneAndUpdate(
+              { _id: data[0]._id },
+              { $push: { favourite_locations: objectId } },
+              { new: true },
+            );
+          }
+        }
+      })
+      .then(() => {
+        res.status(200).send("Location added to favourites");
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while adding location to favourites");
+      });
+  });
+
+  // remove a location from the current user's favourite locations
+  app.delete("/user/favourites/:id", (req, res) => {
+    const id = req.params.id;
+    User.find({ Current_login: { $eq: "true" } })
+      .then((data) => {
+        if (data.length == 1) {
+          if (data[0].favourite_locations.includes(id)) {
+            return User.findOneAndUpdate(
+              { _id: data[0]._id },
+              { $pull: { favourite_locations: id } },
+              { new: true },
+            );
+          }
+        }
+      })
+      .then(() => {
+        res.status(200).send("Location removed from favourites");
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error occurred while removing location from favourites");
+      });
   });
 
   //load current
@@ -452,8 +500,6 @@ db.once('open', function () {
         res.send(msg);
       })
       .catch((error) => console.log(error));
-
-
 
   });
 });
