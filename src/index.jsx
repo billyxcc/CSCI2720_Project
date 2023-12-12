@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client'
 import React, { Component } from 'react';
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Switch, Link, useParams } from 'react-router-dom';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 function render_fun(result) {
   document.open();
@@ -83,12 +83,12 @@ class App extends React.Component {
             <Route exact path="/" element={<Home />} />
             <Route exact path="/login" element={<Login />} />
             <Route exact path="/signup" element={<Sign_up />} />
-            <Route exact path="/user" element={<User value={this.state.current_usertype} />} />
+            <Route path="/user/*" element={<User value={this.state.current_usertype} />} />
             <Route exact path="/admin" element={<Admin value={this.state.current_usertype} />} />
-            <Route exact path="/user/locations" element={<LocationsList />} />
+            {/* <Route exact path="/user/locations" element={<LocationsList />} />
             <Route exact path="/user/locations/:locationId" element={<Location />} />
             <Route exact path="/user/events" element={<EventList />} />
-            <Route exact path="/user/events/:eventId" element={<Event />} />
+            <Route exact path="/user/events/:eventId" element={<Event />} /> */}
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
@@ -320,30 +320,22 @@ class User extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showLocations: false,
       activeLink: 'Active',
     };
   }
 
   handleActiveClick = () => {
-    this.setState({ showLocations: false, activeLink: 'Active' });
+    this.setState({ activeLink: 'Active' });
   };
 
   handleActions1Click = () => {
-    this.setState({ showLocations: true, activeLink: 'actions 1' });
+    this.setState({ activeLink: 'actions 1' });
   };
 
   handleActions2Click = () => {
-    this.setState({ showLocations: false, activeLink: 'actions 2' });
+    this.setState({ activeLink: 'actions 2' });
   };
 
-  handleActions3Click = () => {
-    this.setState({ showLocations: false, activeLink: 'actions 3' });
-  };
-
-  handleActionsEtcClick = () => {
-    this.setState({ showLocations: false, activeLink: 'actions etc.....' });
-  };
 
   render() {
     let i = '';
@@ -363,23 +355,34 @@ class User extends React.Component {
         <div style={{ display: i }}>
           <ul className="nav nav-tabs">
             <li className="nav-item">
-              <a className={`nav-link ${this.state.activeLink === 'Active' ? 'active' : ''}`} aria-current="page" href="#" onClick={this.handleActiveClick}>Active</a>
+              <Link className={`nav-link ${this.state.activeLink === 'Active' ? 'active' : ''}`} aria-current="page" to="/user">Active</Link>
             </li>
             <li className="nav-item">
-              <a className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} href="/user/locations" onClick={this.handleActions1Click}>actions 1</a>
-            </li>
+              <Link className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} to="/user/locations" onClick={this.handleActions1Click}>Locations</Link>            </li>
             <li className="nav-item">
-              <a className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} href="#" onClick={this.handleActions2Click}>actions 2</a>
-            </li>
-            <li className="nav-item">
-              <a className={`nav-link ${this.state.activeLink === 'actions 3' ? 'active' : ''}`} href="#" onClick={this.handleActions3Click}>actions 3</a>
-            </li>
-            <li className="nav-item">
-              <a className={`nav-link ${this.state.activeLink === 'actions etc.....' ? 'active' : ''}`} href="#" onClick={this.handleActionsEtcClick}>actions etc.....</a>
+              <Link className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} to="/user/events" onClick={this.handleActions2Click}>Events</Link>
             </li>
           </ul>
-          {this.state.showLocations && <LocationsList />}
+
+          <Routes>
+            <Route path="locations" element={<LocationsList />} />
+            <Route path="locations/:locationId" element={<Location />} />
+            <Route path="events" element={<EventList />} />
+            <Route path="events/:eventId" element={<Event />} />
+          </Routes>
+
         </div>
+      </div>
+    );
+  };
+}
+
+class Main extends React.Component {
+  render() {
+    return (
+      <div>
+        <h1>Home</h1>
+        <p>This is the home page</p>
       </div>
     );
   };
@@ -485,7 +488,7 @@ class LocationsList extends React.Component {
               <tbody>
                 {filteredLocations.map(location => (
                   <tr key={location.locId}>
-                    <td><a href={`/user/locations/${location.locId}`}>{location.name}</a></td>
+                    <td><Link to={`/user/locations/${location.locId}`}>{location.name}</Link></td>
                     <td>{location.latitude}</td>
                     <td>{location.longitude}</td>
                     <td>{location.events.length}</td>
@@ -552,7 +555,7 @@ function Location({ match }) {
           <ol>
             {location.events.map(event => (
               <li key={event.eventId}>
-                <a href={`/user/events/${event.eventId}`}>{event.title}</a> ({event.dateTime})
+                <Link to={`/user/events/${event.eventId}`}>{event.title}</Link> ({event.dateTime})
               </li>
             ))}
           </ol>
@@ -654,8 +657,8 @@ class EventList extends React.Component {
                 <tbody>
                   {filteredEvents.map(event => (
                     <tr key={event.eventId}>
-                      <td><a href={`/user/events/${event.eventId}`}>{event.title || '-'}</a></td>
-                      <td><a href={`/user/locations/${event.location.locId}`}>{event.location.name || '-'}</a></td>
+                      <td><Link to={`/user/events/${event.eventId}`}>{event.title || '-'}</Link></td>
+                      <td><Link to={`/user/locations/${event.location.locId}`}>{event.location.name || '-'}</Link></td>
                       <td>{event.description || '-'}</td>
                       <td>{event.dateTime || '-'}</td>
                       <td>{event.presenter || '-'}</td>
@@ -696,7 +699,7 @@ function Event({ match }) {
         <div className="col">
           <h1>{event.title || '-'}</h1>
           <h5>Location</h5>
-          <p><a href={`/user/locations/${event.location.locId}`}>{event.location.name || '-'}</a></p>
+          <p><Link to={`/user/locations/${event.location.locId}`}>{event.location.name || '-'}</Link></p>
           <h5>Description</h5>
           <p>{event.description || '-'}</p>
           <h5>Date & Time</h5>
