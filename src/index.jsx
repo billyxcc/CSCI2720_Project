@@ -549,13 +549,13 @@ function Location({ match }) {
       <div className="row">
         <div className="col">
           <h2>Events</h2>
-          <ul>
+          <ol>
             {location.events.map(event => (
               <li key={event.eventId}>
                 <a href={`/user/events/${event.eventId}`}>{event.title}</a> ({event.dateTime})
               </li>
             ))}
-          </ul>
+          </ol>
         </div>
       </div>
       <div className="row">
@@ -588,6 +588,7 @@ class EventList extends React.Component {
       events: [],
       sortAscending: true,
       searchKeyword: '',
+      priceFilter: null,
     };
   }
 
@@ -616,9 +617,14 @@ class EventList extends React.Component {
     this.setState({ searchKeyword: event.target.value });
   };
 
+  handlePriceFilterChange = (event) => {
+    this.setState({ priceFilter: event.target.value });
+  };
+
   render() {
     const filteredEvents = this.state.events.filter(event =>
-      event.title.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
+      event.title.toLowerCase().includes(this.state.searchKeyword.toLowerCase()) &&
+      (this.state.priceFilter === null || event.price.some(price => price <= this.state.priceFilter))
     );
 
     return (
@@ -627,6 +633,7 @@ class EventList extends React.Component {
           <div className="row mt-3">
             <div className="col">
               <input type="text" className="form-control" value={this.state.searchKeyword} onChange={this.handleSearchChange} placeholder="Search events..." />
+              <input type="number" className="form-control" value={this.state.priceFilter} onChange={this.handlePriceFilterChange} placeholder="Max price..." />
             </div>
           </div>
         </div>
@@ -647,12 +654,12 @@ class EventList extends React.Component {
                 <tbody>
                   {filteredEvents.map(event => (
                     <tr key={event.eventId}>
-                      <td><a href={`/user/events/${event.eventId}`}>{event.title}</a></td>
-                      <td>{event.location.name}</td>
-                      <td>{event.description}</td>
-                      <td>{event.dateTime}</td>
-                      <td>{event.presenter}</td>
-                      <td>{event.price}</td>
+                      <td><a href={`/user/events/${event.eventId}`}>{event.title || '-'}</a></td>
+                      <td><a href={`/user/locations/${event.location.locId}`}>{event.location.name || '-'}</a></td>
+                      <td>{event.description || '-'}</td>
+                      <td>{event.dateTime || '-'}</td>
+                      <td>{event.presenter || '-'}</td>
+                      <td>{event.price.length > 0 ? event.price.map(price => `$${price}`).join(', ') : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -687,17 +694,17 @@ function Event({ match }) {
     <div className="container">
       <div className="row">
         <div className="col">
-          <h1>{event.title}</h1>
-          <h5>location</h5>
-          <p><a href={`/user/locations/${event.location.locId}`}>{event.location.name}</a></p>
-          <h5>description</h5>
-          <p>{event.description}</p>
-          <h5>date & time</h5>
-          <p>{event.dateTime}</p>
-          <h5>presenter</h5>
-          <p>{event.presenter}</p>
-          <h5>price</h5>
-          <p>{event.price}</p>
+          <h1>{event.title || '-'}</h1>
+          <h5>Location</h5>
+          <p><a href={`/user/locations/${event.location.locId}`}>{event.location.name || '-'}</a></p>
+          <h5>Description</h5>
+          <p>{event.description || '-'}</p>
+          <h5>Date & Time</h5>
+          <p>{event.dateTime || '-'}</p>
+          <h5>Presenter</h5>
+          <p>{event.presenter || '-'}</p>
+          <h5>Prices</h5>
+          <p>{event.price.length > 0 ? event.price.map(price => `$${price}`).join(', ') : '-'}</p>
         </div>
       </div>
     </div>

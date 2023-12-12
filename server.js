@@ -89,7 +89,7 @@ db.once('open', function () {
       type: String,
     },
     price: {
-      type: String,
+      type: Array,
     },
   });
 
@@ -127,12 +127,56 @@ db.once('open', function () {
 
 
   // load events data from events.xml into database
+  // fs.readFile('public/events.xml', function (err, data) {
+  //   parser.parseString(data, function (err, result) {
+  //     const events = result.events.event;
+  //     events.forEach((event) => {
+  //       Location.findOne({ locId: event.venueid[0] })
+  //         .then(location => {
+  //           let newEvent = new Event({
+  //             eventId: event.$.id,
+  //             title: event.titlee[0],
+  //             location: location._id,
+  //             dateTime: event.predateE[0],
+  //             description: event.desce && event.desce[0] ? event.desce[0] : '',
+  //             presenter: event.presenterorge && event.presenterorge[0] ? event.presenterorge[0] : '',
+  //             price: event.pricee && event.pricee[0] ? event.pricee[0] : '',
+  //           });
+  //           newEvent
+  //             .save()
+  //             .then((event) => {
+  //               // after saving the event, add its id to the location's events array
+  //               if (!location.events.includes(event._id)) {
+  //                 return Location.findOneAndUpdate(
+  //                   { _id: event.location },
+  //                   { $push: { events: event._id } },
+  //                   { new: true },
+  //                 );
+  //               }
+  //             })
+  //             .then(() => {
+  //               console.log("a new event is saved successfully");
+  //             })
+  //             .catch((error) => {
+  //               console.log("failed to save new event");
+  //             });
+  //         })
+  //         .catch(err => {
+  //           console.log("failed to find location");
+  //         });
+  //     });
+  //   });
+  // });
+
   fs.readFile('public/events.xml', function (err, data) {
     parser.parseString(data, function (err, result) {
       const events = result.events.event;
       events.forEach((event) => {
         Location.findOne({ locId: event.venueid[0] })
           .then(location => {
+            let pricee = event.pricee && event.pricee[0] ? event.pricee[0] : '';
+            let prices = pricee.replace(/[^\d,]/g, '').split(',').map(Number);
+
             let newEvent = new Event({
               eventId: event.$.id,
               title: event.titlee[0],
@@ -140,12 +184,11 @@ db.once('open', function () {
               dateTime: event.predateE[0],
               description: event.desce && event.desce[0] ? event.desce[0] : '',
               presenter: event.presenterorge && event.presenterorge[0] ? event.presenterorge[0] : '',
-              price: event.pricee && event.pricee[0] ? event.pricee[0] : '',
+              price: prices,
             });
             newEvent
               .save()
               .then((event) => {
-                // after saving the event, add its id to the location's events array
                 if (!location.events.includes(event._id)) {
                   return Location.findOneAndUpdate(
                     { _id: event.location },
@@ -153,16 +196,7 @@ db.once('open', function () {
                     { new: true },
                   );
                 }
-              })
-              .then(() => {
-                console.log("a new event is saved successfully");
-              })
-              .catch((error) => {
-                console.log("failed to save new event");
               });
-          })
-          .catch(err => {
-            console.log("failed to find location");
           });
       });
     });
