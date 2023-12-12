@@ -57,11 +57,9 @@ db.once('open', function () {
     },
     latitude: {
       type: Number,
-      required: true,
     },
     longitude: {
       type: Number,
-      required: true,
     },
     events: {
       type: Number,
@@ -80,7 +78,7 @@ db.once('open', function () {
       required: true,
     },
     location: {
-      type: Schema.Types.ObjectId, ref: 'Location',
+      type: mongoose.Schema.Types.ObjectId, ref: 'Location',
       required: true,
     },
     dateTime: {
@@ -89,15 +87,12 @@ db.once('open', function () {
     },
     description: {
       type: String,
-      required: true,
     },
     presenter: {
       type: String,
-      required: true,
     },
     price: {
-      type: Number,
-      required: true,
+      type: String,
     },
   });
 
@@ -105,6 +100,66 @@ db.once('open', function () {
   const Admin = mongoose.model("Admin", AdminSchema);
   const Location = mongoose.model("Location", LocationSchema);
   const Event = mongoose.model("Event", EventSchema);
+
+  // load locations data from venues.xml into database
+  const fs = require('fs');
+  const xml2js = require('xml2js');
+  const parser = new xml2js.Parser();
+  fs.readFile('public/venues.xml', function (err, data) {
+    parser.parseString(data, function (err, result) {
+      const locations = result.venues.venue;
+      locations.forEach((location) => {
+        let newLocation = new Location({
+          locId: location.$.id,
+          name: location.venuee[0],
+          latitude: location.latitude[0] ? location.latitude[0] : null,
+          longitude: location.longitude[0] ? location.longitude[0] : null,
+          events: 0,
+        });
+        newLocation
+          .save()
+          .then(() => {
+            console.log("a new location is saved successfully");
+          })
+          .catch((error) => {
+            console.log("failed to save new location");
+          });
+      });
+    });
+  });
+
+
+  // load events data from events.xml into database
+  fs.readFile('public/events.xml', function (err, data) {
+    parser.parseString(data, function (err, result) {
+      const events = result.events.event;
+      events.forEach((event) => {
+        Location.findOne({ locId: event.venueid[0] })
+          .then(location => {
+            let newEvent = new Event({
+              eventId: event.$.id,
+              title: event.titlee[0],
+              location: location._id,
+              dateTime: event.predateE[0],
+              description: event.desce && event.desce[0] ? event.desce[0] : '',
+              presenter: event.presenterorge && event.presenterorge[0] ? event.presenterorge[0] : '',
+              price: event.pricee && event.pricee[0] ? event.pricee[0] : '',
+            });
+            newEvent
+              .save()
+              .then(() => {
+                console.log("a new event is saved successfully");
+              })
+              .catch((error) => {
+                console.log("failed to save new event");
+              });
+          })
+          .catch(err => {
+            console.log("failed to find location");
+          });
+      });
+    });
+  });
 
   // app.get("/locations", (req, res) => {
   //   Location.find({})
