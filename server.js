@@ -63,6 +63,10 @@ db.once('open', function () {
       type: Number,
       required: true,
     },
+    events: {
+      type: Number,
+      required: true,
+    }
   });
 
   const EventSchema = mongoose.Schema({

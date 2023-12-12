@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client'
 import React, { Component } from 'react';
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useParams } from 'react-router-dom';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 function render_fun(result) {
   document.open();
@@ -85,6 +85,8 @@ class App extends React.Component {
             <Route exact path="/signup" element={<Sign_up />} />
             <Route exact path="/user" element={<User value={this.state.current_usertype} />} />
             <Route exact path="/admin" element={<Admin value={this.state.current_usertype} />} />
+            <Route exact path="/locations" element={<LocationsList />} />
+            <Route path="/locations/:locationId" element={<Location />} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
@@ -427,19 +429,34 @@ class LocationsList extends React.Component {
   }
 
   componentDidMount() {
-    fetch('venues.xml')
-      .then(response => response.text())
-      .then(data => {
+    Promise.all([
+      fetch('venues.xml').then(response => response.text()),
+      fetch('events.xml').then(response => response.text()),
+    ])
+      .then(([venuesData, eventsData]) => {
         const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(data, "text/xml");
+        const venuesXml = parser.parseFromString(venuesData, "text/xml");
+        console.log(venuesXml);
+        const eventsXml = parser.parseFromString(eventsData, "text/xml");
 
-        const venues = Array.from(xmlDoc.getElementsByTagName('venue'));
+        const venues = Array.from(venuesXml.getElementsByTagName('venue'));
+        console.log(venues);
+        const events = Array.from(eventsXml.getElementsByTagName('event'));
+
+        const eventCounts = events.reduce((counts, event) => {
+          const venueId = event.getElementsByTagName('venueid')[0].textContent;
+          counts[venueId] = (counts[venueId] || 0) + 1;
+          return counts;
+        }, {});
+
         const locations = venues.map(venue => {
+          const locId = venue.getAttribute('id');
           return {
-            locId: venue.getAttribute('id'),
+            locId,
             name: venue.getElementsByTagName('venuee')[0].textContent,
             latitude: venue.getElementsByTagName('latitude')[0].textContent,
             longitude: venue.getElementsByTagName('longitude')[0].textContent,
+            events: eventCounts[locId] || 0,
           };
         });
 
@@ -449,11 +466,11 @@ class LocationsList extends React.Component {
   }
 
   handleSortClick = () => {
-    const sortedLocations = this.state.locations.sort((a, b) => {
+    const sortedLocations = [...this.state.locations].sort((a, b) => {
       if (this.state.sortAscending) {
-        return a.events.length - b.events.length;
+        return a.events - b.events;
       } else {
-        return b.events.length - a.events.length;
+        return b.events - a.events;
       }
     });
 
@@ -489,7 +506,9 @@ class LocationsList extends React.Component {
                   <th style={{ width: '50%' }}>Name</th>
                   <th style={{ width: '20%' }}>Latitude</th>
                   <th style={{ width: '20%' }}>Longitude</th>
-                  <th style={{ width: '10%' }} onClick={this.handleSortClick}>Events</th>
+                  <th style={{ width: '10%' }} onClick={this.handleSortClick}>
+                    <a href="#">Events</a>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -511,6 +530,143 @@ class LocationsList extends React.Component {
 }
 
 export default LocationsList;
+
+/*
+A separate view for one single location, containing:
+a. A map showing the location.
+b. The location details.
+c. User comments, where users can add new comments seen by all other users.
+*/
+class Location extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      location: null,
+      comments: [],
+      newComment: '',
+    };
+  }
+
+  componentDidMount() {
+    // const { locationId } = this.props.match.params;
+
+    const locationId = "50110014";
+
+    Promise.all([
+      fetch('../venues.xml').then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+      }),
+      fetch('../events.xml').then(response => response.text()),
+      fetch('comments.xml').then(response => response.text()),
+    ])
+      .then(([venuesData, eventsData, commentsData]) => {
+        const parser = new DOMParser();
+        const venuesXml = parser.parseFromString(venuesData, "text/xml");
+        const eventsXml = parser.parseFromString(eventsData, "text/xml");
+        const commentsXml = parser.parseFromString(commentsData, "text/xml");
+
+        const venues = Array.from(venuesXml.getElementsByTagName('venue'));
+        const events = Array.from(eventsXml.getElementsByTagName('event'));
+        const comments = Array.from(commentsXml.getElementsByTagName('comment'));
+
+        const location = venues.find(venue => venue.getAttribute('id') === locationId);
+        const locationEvents = events.filter(event => event.getElementsByTagName('venueid')[0].textContent === locationId);
+        const locationComments = comments.filter(comment => comment.getElementsByTagName('venueid')[0].textContent === locationId);
+
+        this.setState({
+          location: {
+            name: location.getElementsByTagName('venuee')[0]?.textContent,
+            latitude: location.getElementsByTagName('latitude')[0]?.textContent,
+            longitude: location.getElementsByTagName('longitude')[0]?.textContent,
+            events: locationEvents.map(event => ({
+              id: event.getAttribute('id'),
+              name: event.getElementsByTagName('titlee')[0]?.textContent,
+              date: event.getElementsByTagName('predateE')[0]?.textContent,
+            })),
+          },
+          comments: locationComments.map(comment => ({
+            id: comment.getElementsByTagName('commentid')[0]?.textContent,
+            username: comment.getElementsByTagName('username')[0]?.textContent,
+            text: comment.getElementsByTagName('commenttext')[0]?.textContent,
+          })),
+        });
+      })
+      .catch(error => console.error(error));
+  }
+
+  handleCommentChange = (event) => {
+    this.setState({ newComment: event.target.value });
+  };
+
+  handleCommentSubmit = (event) => {
+    event.preventDefault();
+
+    const newComment = {
+      id: Math.random().toString(36).substring(2, 11),
+      username: 'Anonymous',
+      text: this.state.newComment,
+    };
+
+    this.setState({
+      comments: [...this.state.comments, newComment],
+      newComment: '',
+    });
+  }
+
+  render() {
+    const { location, comments, newComment } = this.state;
+
+    if (!location) {
+      return null;
+    }
+
+    return (
+      <div className="container">
+        <div className="row">
+          <div className="col">
+            <h1>{location.name}</h1>
+            <p>Latitude: {location.latitude}</p>
+            <p>Longitude: {location.longitude}</p>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <h2>Events</h2>
+            <ul>
+              {location.events.map(event => (
+                <li key={event.id}>
+                  <a href={`/events/${event.id}`}>{event.name}</a> ({event.date})
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <h2>Comments</h2>
+            <ul>
+              {comments.map(comment => (
+                <li key={comment.id}>
+                  <strong>{comment.username}</strong>: {comment.text}
+                </li>
+              ))}
+            </ul>
+            <form onSubmit={this.handleCommentSubmit}>
+              <div className="form-group">
+                <label htmlFor="comment">New comment</label>
+                <textarea className="form-control" id="comment" rows="3" value={newComment} onChange={this.handleCommentChange}></textarea>
+              </div>
+              <button type="submit" className="btn btn-primary">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
 
 class NoMatch extends React.Component {
   render() {
