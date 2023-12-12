@@ -26,7 +26,7 @@ db.once('open', function () {
       required: true,
     },
     favourite_locations: {
-      type: Array,
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
       required: false,
     },
     Current_login: {
@@ -126,48 +126,6 @@ db.once('open', function () {
   });
 
 
-  // load events data from events.xml into database
-  // fs.readFile('public/events.xml', function (err, data) {
-  //   parser.parseString(data, function (err, result) {
-  //     const events = result.events.event;
-  //     events.forEach((event) => {
-  //       Location.findOne({ locId: event.venueid[0] })
-  //         .then(location => {
-  //           let newEvent = new Event({
-  //             eventId: event.$.id,
-  //             title: event.titlee[0],
-  //             location: location._id,
-  //             dateTime: event.predateE[0],
-  //             description: event.desce && event.desce[0] ? event.desce[0] : '',
-  //             presenter: event.presenterorge && event.presenterorge[0] ? event.presenterorge[0] : '',
-  //             price: event.pricee && event.pricee[0] ? event.pricee[0] : '',
-  //           });
-  //           newEvent
-  //             .save()
-  //             .then((event) => {
-  //               // after saving the event, add its id to the location's events array
-  //               if (!location.events.includes(event._id)) {
-  //                 return Location.findOneAndUpdate(
-  //                   { _id: event.location },
-  //                   { $push: { events: event._id } },
-  //                   { new: true },
-  //                 );
-  //               }
-  //             })
-  //             .then(() => {
-  //               console.log("a new event is saved successfully");
-  //             })
-  //             .catch((error) => {
-  //               console.log("failed to save new event");
-  //             });
-  //         })
-  //         .catch(err => {
-  //           console.log("failed to find location");
-  //         });
-  //     });
-  //   });
-  // });
-
   fs.readFile('public/events.xml', function (err, data) {
     parser.parseString(data, function (err, result) {
       const events = result.events.event;
@@ -186,15 +144,31 @@ db.once('open', function () {
               presenter: event.presenterorge && event.presenterorge[0] ? event.presenterorge[0] : '',
               price: prices,
             });
-            newEvent
-              .save()
-              .then((event) => {
-                if (!location.events.includes(event._id)) {
-                  return Location.findOneAndUpdate(
-                    { _id: event.location },
-                    { $push: { events: event._id } },
-                    { new: true },
-                  );
+            // newEvent
+            //   .save()
+            //   .then((event) => {
+            //     if (!location.events.includes(event._id)) {
+            //       return Location.findOneAndUpdate(
+            //         { _id: event.location },
+            //         { $push: { events: event._id } },
+            //         { new: true },
+            //       );
+            //     }
+            //   });
+            Event.findOne({ eventId: event.$.id })
+              .then(existingEvent => {
+                if (!existingEvent) {
+                  newEvent
+                    .save()
+                    .then((event) => {
+                      if (!location.events.includes(event._id)) {
+                        return Location.findOneAndUpdate(
+                          { _id: event.location },
+                          { $push: { events: event._id } },
+                          { new: true },
+                        );
+                      }
+                    });
                 }
               });
           });
@@ -204,9 +178,7 @@ db.once('open', function () {
 
   app.get("/user/locations", (req, res) => {
     Location.find({})
-      .sort({ events: -1 }) // sort by the number of events in descending order
       .then((locations) => {
-        // Add a new field 'count' to each location
         const locationsWithCount = locations.map(location => ({
           ...location._doc,
           count: location.events.length,
@@ -255,6 +227,18 @@ db.once('open', function () {
         console.error(error);
         res.status(500).send("Error occurred while fetching event");
       });
+  });
+
+  // show all favourite locations of the current user
+  app.get("/user/favourites", (req, res) => {
+
+    User.find({ Current_login: { $eq: "true" } })
+      .then((data) => {
+        if (data.length == 1) {
+          return res.send(data[0].favourite_locations);
+        }
+      })
+      .catch((error) => console.log(error));
   });
 
   //load current

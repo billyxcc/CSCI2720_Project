@@ -85,10 +85,6 @@ class App extends React.Component {
             <Route exact path="/signup" element={<Sign_up />} />
             <Route path="/user/*" element={<User value={this.state.current_usertype} />} />
             <Route exact path="/admin" element={<Admin value={this.state.current_usertype} />} />
-            {/* <Route exact path="/user/locations" element={<LocationsList />} />
-            <Route exact path="/user/locations/:locationId" element={<Location />} />
-            <Route exact path="/user/events" element={<EventList />} />
-            <Route exact path="/user/events/:eventId" element={<Event />} /> */}
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
@@ -336,6 +332,9 @@ class User extends React.Component {
     this.setState({ activeLink: 'actions 2' });
   };
 
+  handleActions3Click = () => {
+    this.setState({ activeLink: 'actions 3' });
+  }
 
   render() {
     let i = '';
@@ -363,6 +362,9 @@ class User extends React.Component {
             <li className="nav-item">
               <Link className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} to="/user/events" onClick={this.handleActions2Click}>Events</Link>
             </li>
+            <li className="nav-item">
+              <Link className={`nav-link ${this.state.activeLink === 'actions 3' ? 'active' : ''}`} to="/user/favourites" onClick={this.handleActions3Click}>Favourite Locations</Link>
+            </li>
           </ul>
 
           <Routes>
@@ -370,20 +372,10 @@ class User extends React.Component {
             <Route path="locations/:locationId" element={<Location />} />
             <Route path="events" element={<EventList />} />
             <Route path="events/:eventId" element={<Event />} />
+            <Route path="favourites" element={<Favourites />} />
           </Routes>
 
         </div>
-      </div>
-    );
-  };
-}
-
-class Main extends React.Component {
-  render() {
-    return (
-      <div>
-        <h1>Home</h1>
-        <p>This is the home page</p>
       </div>
     );
   };
@@ -713,6 +705,86 @@ function Event({ match }) {
       </div>
     </div>
   );
+}
+
+class Favourites extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      locations: [],
+      sortAscending: true,
+      searchKeyword: '',
+    };
+  }
+
+  async componentDidMount() {
+    const response = await fetch('http://localhost:80/user/favourites');
+    const locations = await response.json();
+    this.setState({ locations });
+  }
+
+  handleSortClick = () => {
+    const sortedLocations = [...this.state.locations].sort((a, b) => {
+      if (this.state.sortAscending) {
+        return a.events.length - b.events.length;
+      } else {
+        return b.events.length - a.events.length;
+      }
+    });
+
+    this.setState({
+      locations: sortedLocations,
+      sortAscending: !this.state.sortAscending,
+    });
+  };
+
+  handleSearchChange = (event) => {
+    this.setState({ searchKeyword: event.target.value });
+  };
+
+  render() {
+    const filteredLocations = this.state.locations.filter(location =>
+      location.name.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
+    );
+
+    return (
+      <div className="container">
+        <div className="row">
+          <div className="row mt-3">
+            <div className="col">
+              <input type="text" className="form-control" value={this.state.searchKeyword} onChange={this.handleSearchChange} placeholder="Search locations..." />
+            </div>
+          </div>
+        </div>
+        <div className="row mt-3">
+          <div className="col">
+            <table className="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th style={{ width: '50%' }}>Name</th>
+                  <th style={{ width: '20%' }}>Latitude</th>
+                  <th style={{ width: '20%' }}>Longitude</th>
+                  <th style={{ width: '10%' }} onClick={this.handleSortClick}>
+                    <a href="#">Events</a>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLocations.map(location => (
+                  <tr key={location.locId}>
+                    <td><Link to={`/user/locations/${location.locId}`}>{location.name}</Link></td>
+                    <td>{location.latitude}</td>
+                    <td>{location.longitude}</td>
+                    <td>{location.events.length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 class NoMatch extends React.Component {
