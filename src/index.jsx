@@ -354,11 +354,12 @@ class User extends React.Component {
         </div>
         <div style={{ display: i }}>
           <ul className="nav nav-tabs">
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className={`nav-link ${this.state.activeLink === 'Active' ? 'active' : ''}`} aria-current="page" to="/user">Active</Link>
-            </li>
+            </li> */}
             <li className="nav-item">
-              <Link className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} to="/user/locations" onClick={this.handleActions1Click}>Locations</Link>            </li>
+              <Link className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} to="/user/locations" onClick={this.handleActions1Click}>Locations</Link>
+            </li>
             <li className="nav-item">
               <Link className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} to="/user/events" onClick={this.handleActions2Click}>Events</Link>
             </li>
@@ -591,7 +592,7 @@ class EventList extends React.Component {
       events: [],
       sortAscending: true,
       searchKeyword: '',
-      priceFilter: null,
+      priceFilter: '',
     };
   }
 
@@ -627,7 +628,7 @@ class EventList extends React.Component {
   render() {
     const filteredEvents = this.state.events.filter(event =>
       event.title.toLowerCase().includes(this.state.searchKeyword.toLowerCase()) &&
-      (this.state.priceFilter === null || event.price.some(price => price <= this.state.priceFilter))
+      (this.state.priceFilter === '' || event.price.some(price => price <= this.state.priceFilter))
     );
 
     return (
@@ -635,8 +636,8 @@ class EventList extends React.Component {
         <div className="row">
           <div className="row mt-3">
             <div className="col">
-              <input type="text" className="form-control" value={this.state.searchKeyword} onChange={this.handleSearchChange} placeholder="Search events..." />
-              <input type="number" className="form-control" value={this.state.priceFilter} onChange={this.handlePriceFilterChange} placeholder="Max price..." />
+            <input type="text" className="form-control" value={this.state.searchKeyword || ''} onChange={this.handleSearchChange} placeholder="Search events..." />
+              <input type="number" className="form-control" value={this.state.priceFilter || ''} onChange={this.handlePriceFilterChange} placeholder="Max price..." />
             </div>
           </div>
         </div>
