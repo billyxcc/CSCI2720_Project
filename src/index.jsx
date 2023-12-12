@@ -321,10 +321,6 @@ class User extends React.Component {
     };
   }
 
-  handleActiveClick = () => {
-    this.setState({ activeLink: 'Active' });
-  };
-
   handleActions1Click = () => {
     this.setState({ activeLink: 'actions 1' });
   };
@@ -354,9 +350,6 @@ class User extends React.Component {
         </div>
         <div style={{ display: i }}>
           <ul className="nav nav-tabs">
-            {/* <li className="nav-item">
-              <Link className={`nav-link ${this.state.activeLink === 'Active' ? 'active' : ''}`} aria-current="page" to="/user">Active</Link>
-            </li> */}
             <li className="nav-item">
               <Link className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} to="/user/locations" onClick={this.handleActions1Click}>Locations</Link>
             </li>
@@ -541,7 +534,9 @@ function Location({ match }) {
   const handleFavouriteClick = async () => {
     const objectId = location._id;
 
-    if (favouriteLocations.includes(objectId)) {
+    const favouriteLocation = favouriteLocations.find(favLocation => favLocation._id === objectId);
+
+    if (favouriteLocation) {
       const response = await fetch(`http://localhost:80/user/favourites/${objectId}`, {
         method: 'DELETE',
       });
@@ -550,8 +545,8 @@ function Location({ match }) {
         console.error('Failed to remove location from favourites');
         return;
       }
-      
-      setFavouriteLocations(favouriteLocations.filter(id => id !== objectId));
+
+      setFavouriteLocations(favouriteLocations.filter(favLocation => favLocation._id !== objectId));
     } else {
       const response = await fetch(`http://localhost:80/user/favourites/${objectId}`, {
         method: 'POST',
@@ -559,9 +554,10 @@ function Location({ match }) {
 
       if (!response.ok) {
         console.error('Failed to add location to favourites');
+        return;
       }
 
-      setFavouriteLocations([...favouriteLocations, objectId]);
+      setFavouriteLocations([...favouriteLocations, location]);
     }
   };
 
@@ -574,7 +570,7 @@ function Location({ match }) {
       <div className="row">
         <div className="col">
           <h1>{location.name}</h1>
-          {favouriteLocations.includes(location._id) ?
+          {favouriteLocations.find(favLocation => favLocation._id === location._id) ?
             <FaHeart onClick={handleFavouriteClick} style={{ color: 'red' }} />
             :
             <FaRegHeart onClick={handleFavouriteClick} />
@@ -786,7 +782,7 @@ class Favourites extends React.Component {
 
   render() {
     const filteredLocations = this.state.locations.filter(location =>
-      location.name && this.state.searchKeyword && location.name.toLowerCase().includes(this.state.searchKeyword.toLowerCase())
+      !this.state.searchKeyword || (location.name && location.name.toLowerCase().includes(this.state.searchKeyword.toLowerCase()))
     );
 
     return (
