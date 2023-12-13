@@ -45,13 +45,12 @@ class GoogleMap extends Component {
         const marker = new window.google.maps.Marker({
           position: { lat: location.latitude, lng: location.longitude },
           map: map,
-          title: location.name,
-          // label: location.name,
+          title: location.name
         });
         console.log(location.name);
-        // marker.addListener('click', () => {
-        //   window.location.href = location.url;
-        // });
+        marker.addListener('click', () => {
+          window.location.href = `http://localhost:3000/user/locations/${location.locId}`;
+        });
       }
     });
   };
