@@ -6,6 +6,9 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import GoogleMap from './Map/googleMap';
 import SmallMap from './Map/smallMap';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
+
+var login_username;
+
 function render_fun(result) {
   document.open();
   document.write(result);
@@ -64,6 +67,7 @@ class App extends React.Component {
     const result = await response.text();
     const result_current = result.split("**");
     if (result_current[0] == "Valid") {
+      login_username = result_current[2];
       this.setState({ current_login: 'Valid', current_username: result_current[2], current_usertype: result_current[1] });
     } else {
       this.setState({ current_login: 'Invalid', current_username: 'Invalid', current_usertype: 'Invalid' });
@@ -109,6 +113,7 @@ class Navigation extends React.Component {
     event.preventDefault();
     const response = await fetch('http://localhost:80/logout');
     const result = await response.text();
+    login_username = "";
     render_fun(result);
   }
   render() {
@@ -781,25 +786,52 @@ function Location({ match }) {
       setFavouriteLocations(favouriteLocations);
     };
 
+    const fetchLocationComments = async () => {
+      const response = await fetch(`http://localhost:80/comment/${locationId}`);
+      const comments = await response.json();
+      setComments(comments);
+      console.log(comments);
+    }
+
     fetchLocation();
     fetchFavouriteLocations();
+    fetchLocationComments();
   }, [locationId]);
 
   const handleCommentChange = (event) => {
     setNewComment(event.target.value);
   };
 
-  const handleCommentSubmit = (event) => {
+  const handleCommentSubmit = async (event) => {
     event.preventDefault();
+    
+    if(login_username != ""){
+      const data = {
+        locId: locationId,
+        content: newComment,
+        username: login_username
+      }
+  
+      // use POST method to send a request to the server
+      const response = await fetch(`http://localhost:80/comment/${locationId}`, { //put your server address here
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
 
-    const newCommentObj = {
-      id: Math.random().toString(36).substring(2, 11),
-      username: 'Anonymous',
-      text: newComment,
-    };
-
-    setComments([...comments, newCommentObj]);
-    setNewComment('');
+      const commentId = (await response.json()).commentId
+      console.log(commentId);
+      const newCommentObj = {
+        commentId: commentId,
+        username: login_username,
+        content: newComment,
+      };
+  
+      setComments([...comments, newCommentObj]);
+      setNewComment('');
+    }
   };
 
   const handleFavouriteClick = async () => {
@@ -871,8 +903,8 @@ function Location({ match }) {
           <h2>Comments</h2>
           <ul>
             {comments.map(comment => (
-              <li key={comment.id}>
-                <strong>{comment.username}</strong>: {comment.text}
+              <li key={comment.commentId}>
+                <strong>{comment.username}</strong>: {comment.content}
               </li>
             ))}
           </ul>

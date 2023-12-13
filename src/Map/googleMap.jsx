@@ -27,17 +27,6 @@ class GoogleMap extends Component {
     const map = new window.google.maps.Map(document.getElementById('map'), {
       center: { lat: 22.30778, lng: 114.18722 },
       zoom: 11,
-      // styles: [
-      //   {
-      //     featureType: 'poi',
-      //     stylers: [{ visibility: 'off' }],
-      //   },
-      //   {
-      //     featureType: 'transit',
-      //     elementType: 'labels.icon',
-      //     stylers: [{ visibility: 'off' }],
-      //   },
-      // ],
     });
 
     this.state.locations.forEach((location) => {

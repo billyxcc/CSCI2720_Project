@@ -6,6 +6,7 @@ app.use(cors());
 app.use(express.json());
 
 const mongoose = require('mongoose');
+const { error } = require('console');
 mongoose.connect('mongodb://127.0.0.1:27017/myDatabase');
 
 const db = mongoose.connection;
@@ -97,10 +98,31 @@ db.once('open', function () {
     },
   });
 
+  const CommentSchema = mongoose.Schema({
+    commentId: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
+    locId: {
+      type: Number,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    username: {
+      type: String,
+      required: true
+    }
+  });
+
   const User = mongoose.model("User", UserSchema);
   const Admin = mongoose.model("Admin", AdminSchema);
   const Location = mongoose.model("Location", LocationSchema);
   const Event = mongoose.model("Event", EventSchema);
+  const Comment = mongoose.model("Comment", CommentSchema);
 
   // load locations data from venues.xml into database
   const fs = require('fs');
@@ -305,6 +327,43 @@ db.once('open', function () {
       });
 
   });
+
+  //Post location comment
+  app.post("/comment/:locId", (req,res) => {
+    const id = req.params.locId;
+    const commentData = req.body;
+    const content = commentData.content;
+    const username = commentData.username;
+    
+    Comment.find()
+    .sort({commentId: -1})
+    .limit(1)
+    .then((data) => {
+      console.log(data);
+      const commentId = (data.length > 0)?(data[0].commentId+1):0;
+      let newComment = new Comment({
+        commentId: commentId,
+        locId: id,
+        content: content,
+        username: username, 
+      });
+      newComment
+      .save()
+      .then(()=>{res.send(newComment)});
+    });
+  })
+
+  //Get location comment
+  app.get("/comment/:locId", (req,res) => {
+    const id = req.params.locId;
+
+    Comment.find({locId: {$eq: id}})
+    .then((data) => {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(data);
+    })
+    .catch((error) => console.log);
+  })
 
 
   //Sign-up
