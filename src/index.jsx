@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Switch, Link, useParams } from 'react-router-dom';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import GoogleMap from './googleMap';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 function render_fun(result) {
   document.open();
@@ -333,6 +334,10 @@ class User extends React.Component {
     this.setState({ activeLink: 'actions 3' });
   }
 
+  clickActionHandler = (activeLinkStr) => {
+    this.setState({ activeLink: activeLinkStr });
+  }
+
   render() {
     let i = '';
     let j = '';
@@ -359,6 +364,9 @@ class User extends React.Component {
             <li className="nav-item">
               <Link className={`nav-link ${this.state.activeLink === 'actions 3' ? 'active' : ''}`} to="/user/favourites" onClick={this.handleActions3Click}>Favourite Locations</Link>
             </li>
+            <li className="nav-item">
+              <Link className={`nav-link ${this.state.activeLink === 'actions 4' ? 'active' : ''}`} to="/user/map" onClick={()=>{this.clickActionHandler('action 4')}}>Map</Link>
+            </li>
           </ul>
 
           <Routes>
@@ -367,6 +375,7 @@ class User extends React.Component {
             <Route path="events" element={<EventList />} />
             <Route path="events/:eventId" element={<Event />} />
             <Route path="favourites" element={<Favourites />} />
+            <Route path="map" element={<GoogleMap />} />
           </Routes>
 
         </div>
