@@ -133,7 +133,7 @@ db.once('open', function () {
         Location.findOne({ locId: event.venueid[0] })
           .then(location => {
             let pricee = event.pricee && event.pricee[0] ? event.pricee[0] : '';
-            let prices = pricee.replace(/[^\d,]/g, '').split(',').map(Number);
+            let prices = pricee.replace(/;/g, ',').replace(/[^\d,]/g, '').split(',').map(Number);
 
             let newEvent = new Event({
               eventId: event.$.id,
@@ -144,17 +144,6 @@ db.once('open', function () {
               presenter: event.presenterorge && event.presenterorge[0] ? event.presenterorge[0] : '',
               price: prices,
             });
-            // newEvent
-            //   .save()
-            //   .then((event) => {
-            //     if (!location.events.includes(event._id)) {
-            //       return Location.findOneAndUpdate(
-            //         { _id: event.location },
-            //         { $push: { events: event._id } },
-            //         { new: true },
-            //       );
-            //     }
-            //   });
             Event.findOne({ eventId: event.$.id })
               .then(existingEvent => {
                 if (!existingEvent) {
