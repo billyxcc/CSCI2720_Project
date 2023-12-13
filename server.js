@@ -43,6 +43,10 @@ db.once('open', function () {
       type: String,
       required: true,
     },
+    Current_login: {
+      type: Boolean,
+      required: true,
+    },
   });
 
   const LocationSchema = mongoose.Schema({
@@ -491,6 +495,85 @@ db.once('open', function () {
       .catch((error) => console.log(error));
 
   });
+
+  //for admin page
+
+  app.get("/admin/location", (req,res) => {
+    Location.find({})
+    .then((data)=> {res.setHeader('Content-Type', 'application/json');res.send(data)})
+    .catch((err)=> console.log(err))
+  });
+  
+  app.get("/admin/event", (req,res) => {
+    Event.find({})
+    .then((data)=> {res.setHeader('Content-Type', 'application/json');res.send(data)})
+    .catch((err)=> console.log(err))
+  });
+  
+  app.delete('/admin/event/del/:eventId', (req,res) => {
+   
+    const eventId = req.params.eventId; 
+    Event.findOneAndDelete({eventId:{$eq: eventId}})
+    .then((data)=> {console.log("Deleted successfully.");res.status(204);res.send("Deleted successfully.")})
+    .catch((err)=>console.log(err))
+  })
+  
+  app.put('/admin/event/create', (req,res)=>{
+    const Title = req.body.Title;
+    const eventLocation = req.body.eventLocation;
+    const dateTime = req.body.dateTime;
+    const Description = req.body.Description;
+    const Presenter = req.body.Presenter;
+    const Price = req.body.Price;
+    Location.find({name:{$eq: eventLocation}})
+    .then((data) => {
+      const loc_id = data[0]._id;
+      let newEvent = new Event({
+        eventId: 0,
+        title: Title,
+        location: loc_id,
+        dateTime: dateTime,
+        description: Description,
+        presenter: Presenter,
+        price: Price
+      })
+  
+      function MaxId(){
+        Event.find({})
+        .then((data)=> {
+          let ID = -1;
+          for(const key of data){
+            if(key["eventId"]>ID){
+              ID = key["eventId"]
+            }
+          };
+          newEvent["eventId"] = ID+1;
+          newEvent.save()
+          .then(() => res.send("Successfully Created."))
+          .catch((err) => console.log(err))
+      })}
+      MaxId();
+    }
+    )
+    })
+  
+   app.put('/admin/event/update', (req,res)=>{
+    const eventId = req.body.eventId;
+    const Title = req.body.Title;
+    const eventLocation = req.body.eventLocation;
+    const dateTime = req.body.dateTime;
+    const Description = req.body.Description;
+    const Presenter = req.body.Presenter;
+    const Price = req.body.Price;
+    console.log('23')
+    Location.find({name:{$eq: eventLocation}})
+    .then((data) => {
+      const loc_id = data[0]._id;
+      Event.findOneAndUpdate({eventId:{$eq: eventId}}, {title: Title, location:loc_id, dateTime:dateTime, description: Description, presenter: Presenter, price: Price},{new: true})
+      .then((data)=> res.send("Updated Successfully!"))
+      .catch((err) => console.log(err))
+  
+   }) })
 });
 
 const server = app.listen(80);

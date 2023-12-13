@@ -385,7 +385,260 @@ class User extends React.Component {
   };
 }
 
+class CRUDEventData extends React.Component{
+  constructor(props) {
+    super(props);
+    this.Submit = this.Submit.bind(this)
+    this.Submit_eventUpdate = this.Submit_eventUpdate.bind(this)
+    this.state = {
+      locNamelist: [] ,
+      evlist: [],
+      loclist:[],
+      selectedLocation: 'null',
+      one_ev:0
+    };
+  }
+
+  componentDidMount() {
+    this.showloc();
+    this.showevent();
+  }
+
+
+    showloc(){
+      const location_address = fetch('http://localhost:80/admin/location', {method: 'GET'})
+      .then((response) => response.json())
+      .then((data =>{
+        this.setState({loclist: data})
+        let locNamelist = data.map(element => element.name);
+        this.setState({ locNamelist: locNamelist });
+      }))
+      .catch((err) => console.log(err))
+    } 
+
+    showevent(){
+      const location_event = fetch('http://localhost:80/admin/event', {method: 'GET'})
+      .then((response) => response.json())
+      .then((data =>{
+        this.setState({ evlist: data });
+      }))
+      .catch((err) => console.log(err))}
+
+    findLoc(ev){
+      let loc = this.state.loclist;
+      for(const element of loc){
+        const x = element._id.toString();
+        const y = ev.toString();
+        if(x === y){
+          return element.name
+        }
+      }
+    }
+
+    DeleteEvent(eventId){
+      console.log(eventId)
+      const del = fetch(`http://localhost:80/admin/event/del/${eventId}`, {method:'Delete'}).catch((err)=>console.log(err))
+      this.setState({one_ev : 0})
+      this.showevent()
+    }
+
+    Submit = async(event) =>{
+      event.preventDefault();
+      const Title = document.getElementById('Title').value;
+      const eventLocation = document.getElementById('Location').value;
+      const dateTime = document.getElementById('dateTime').value;
+      const Description = document.getElementById('Description').value;
+      const Presenter = document.getElementById('Presenter').value;
+      const Price = document.getElementById('Price').value;
+      const data ={
+        Title: Title,
+        eventLocation: eventLocation,
+        dateTime: dateTime,
+        Description: Description,
+        Presenter: Presenter,
+        Price: Price
+      }
+      const response = await fetch(`http://localhost:80/admin/event/create`, { 
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      this.componentDidMount()
+      document.getElementById('form_message').innerHTML = "Successfully Created!"
+    }
+
+    Submit_eventUpdate = async(event) =>{
+      event.preventDefault();
+      const eventId = document.getElementById('eventId_update').value
+      const Title = document.getElementById('Title_update').value;
+      const eventLocation = document.getElementById('Location_update').value;
+      const dateTime = document.getElementById('dateTime_update').value;
+      const Description = document.getElementById('Description_update').value;
+      const Presenter = document.getElementById('Presenter_update').value;
+      const Price = document.getElementById('Price_update').value;
+      const data ={
+        eventId: eventId,
+        Title: Title,
+        eventLocation: eventLocation,
+        dateTime: dateTime,
+        Description: Description,
+        Presenter: Presenter,
+        Price: Price
+      }
+      const response = await fetch(`http://localhost:80/admin/event/update`, { 
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      this.componentDidMount() 
+      document.getElementById('formupdate_message').innerHTML = "Successfully updated!"
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+
+    
+
+  render(){ 
+  if( this.state.selectedLocation ==  'null'){
+    return(
+      <div className="col">
+        <div>
+          <h3>Create a New Event:</h3>
+          <form id="Form_of_Admin"  onSubmit={this.Submit}>
+              <label for="eventId" style={{ marginRight: '39px' }}>EventId:</label>
+              <input type="text" id="eventId" name="eventId" value={"Decided by the server."} disabled></input>
+              <br/>
+              <label for="Title" style={{ marginRight: '60px' }}>Title:</label>
+              <input type="text" style={{width: '600px'}} id="Title" name="Title" required></input>
+              <br/>
+             <label for="Location" style={{ marginRight: '30px' }}>Location:</label>
+              <select type="text" id="Location" name="Location"  required>
+              {this.state.locNamelist.map((location, index) => (
+              <option value={location}>{location}</option>
+            ))}
+              </select>
+              <br/>
+              <label for="dateTime" style={{ marginRight: '23px' }}>DateTime:</label>
+              <input type="datetime-local" lang='en' id="dateTime" name="dateTime"  required></input>
+              <br/>
+              <label for="Description" style={{ marginRight: '11px' }}>Description:</label>
+              <input type="text" style={{width: '600px'}} id="Description" name="Description" required></input>
+              <br/>
+              <label for="Presenter" style={{ marginRight: '23px' }}>Presenter:</label>
+              <input type="text" style={{width: '600px'}} id="Presenter" name="Presenter" required></input>
+              <br/>
+              <label for="Price" style={{ marginRight: '55px' }}>Price:</label>
+              <input type="number" id="Price" name="Price"  required></input>
+              <br/>
+              <input type="submit" value="Submit" id="submit" ></input><h5 id='form_message'></h5>
+              </form><br/>
+        </div>
+        <div>
+          <table className="table table-striped table-hover">
+          <tbody>
+            {this.state.locNamelist.map((location, index) => (
+              <tr key={index}>
+                <td><a onClick={()=> {this.setState({selectedLocation: {location}}, ()=> console.log(this.state.selectedLocation))}}>{location}</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+      </div>)
+  } else {
+    if(this.state.one_ev == 0){
+    let eventlist = [];
+    for(const element of this.state.evlist){
+    if(this.findLoc(element['location']) == this.state.selectedLocation['location']){
+      eventlist.push(element);
+    }
+    }
+    return(
+      <div className="col">
+        <table className="table table-striped table-hover">
+          <tbody>
+            {eventlist.map((ev, index) => (
+              <tr key={index}>
+                <td><h2 style={{textDecoration: 'underline',color: 'blue'}} onClick={()=>{this.setState({one_ev: ev})}}>Event:</h2><br/>EventId: {ev["eventId"]}<br/>Title: {ev['title']}<br/>Location: {this.findLoc(ev['location'])}<br/> 
+                DataTime: {ev['dateTime']}<br/>Description: {ev['description']?ev['description']:"None"}<br/>Presenter: {ev['presenter']?ev['presenter']:"None"}<br/>Price: {ev['price']?ev['price']:"free"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+    )} else 
+      return(
+      <div className="col">
+      <table className="table table-striped table-hover">
+        <tbody>
+            <tr>
+              <td><h2>Event:</h2>EventId: {this.state.one_ev["eventId"]}<br/>Title: {this.state.one_ev['title']}<br/>Location: {this.findLoc(this.state.one_ev['location'])}<br/> 
+              DataTime: {this.state.one_ev['dateTime']}<br/>Description: {this.state.one_ev['description']?this.state.one_ev['description']:"None"}<br/>Presenter: {this.state.one_ev['presenter']?this.state.one_ev['presenter']:"None"}<br/>Price: {this.state.one_ev['price']?this.state.one_ev['price']:"free"}</td>
+            </tr>
+        </tbody>
+      </table>
+      <button onClick={()=>this.DeleteEvent(this.state.one_ev['eventId'])}>Delete this Event!</button><br />
+      <div>
+          <h3>Update the Event:</h3>
+          <form id="Form_of_Admin_update_event"  onSubmit={this.Submit_eventUpdate}>
+              <label for="eventId_update" style={{ marginRight: '39px' }}>EventId:</label>
+              <input type="text" id="eventId_update" name="eventId_update" value={this.state.one_ev["eventId"]} disabled></input>
+              <br/>
+              <label for="Title_update" style={{ marginRight: '60px' }}>Title:</label>
+              <input type="text" style={{width: '600px'}} id="Title_update" name="Title_update" defaultValue={this.state.one_ev['title']} placeholder={this.state.one_ev['title']} required></input>
+              <br/>
+             <label for="Location_update" style={{ marginRight: '30px' }}>Location:</label>
+              <select type="text" id="Location_update" name="Location_update" defaultValue={this.findLoc(this.state.one_ev['location'])}  required>
+              {this.state.locNamelist.map((location, index) => (
+              <option value={location}>{location}</option>
+            ))}
+              </select>
+              <br/>
+              <label for="dateTime_update" style={{ marginRight: '23px' }}>DateTime:</label>
+              <input type="datetime-local" id="dateTime_update" name="dateTime_update"  defaultValue={this.state.one_ev['dateTime']}required></input>
+              <br/>
+              <label for="Description_update" style={{ marginRight: '11px' }}>Description:</label>
+              <input type="text"  style={{width: '600px'}} id="Description_update" name="Description_update" defaultValue={this.state.one_ev['description']?this.state.one_ev['description']:"None"} required></input>
+              <br/>
+              <label for="Presenter_update" style={{ marginRight: '23px' }}>Presenter:</label>
+              <input type="text" style={{width: '600px'}} id="Presenter_update" name="Presenter_update" defaultValue={this.state.one_ev['presenter']?this.state.one_ev['presenter']:"None"} required></input>
+              <br/>
+              <label for="Price_update" style={{ marginRight: '55px' }}>Price:</label>
+              <input type="number" id="Price_update" name="Price_update"  defaultValue={this.state.one_ev['price']?this.state.one_ev['price']:"free"} required></input>
+              <br/>
+              <div style={{display: 'inline-block'}} ><input type="submit" value="Submit" id="submit" ></input> <h5 id='formupdate_message'></h5></div>
+              </form>
+        </div>
+
+    </div>
+    )
+
+    }
+  }
+  }
+
+class CRUDUserData extends React.Component{
+  render(){
+    return(
+      <h1>we</h1>
+    )
+  }
+}
+
 class Admin extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeLink: 'Active',
+    };
+  }
 
   render() {
     let i = '';
@@ -397,28 +650,36 @@ class Admin extends React.Component {
       i = 'NONE';
       j = '';
     }
+
+    let content;
+
+    if (this.state.activeLink === 'Active') {
+      content = <CRUDEventData />;
+    } else if (this.state.activeLink === 'Active1') {
+      content = <CRUDUserData />;
+    }
     return (
       <div>
         <div style={{ display: j }}>
           <h2>You have no permission to visit this page</h2>
         </div>
         <div style={{ display: i }}>
+          <div>
           <ul className="nav nav-tabs">
             <li className="nav-item">
-              <a className="nav-link active" aria-current="page" href="#">CRUD event data</a>
+              <a className={`nav-link ${this.state.activeLink === 'Active' ? 'active' : ''}`} onClick={()=>this.setState({activeLink: 'Active'})} aria-current="page" href="#">CRUD event data</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#">CRUD user data</a>
+              <a className={`nav-link ${this.state.activeLink === 'Active1' ? 'active' : ''}`} onClick={()=>this.setState({activeLink: 'Active1'})} href="#">CRUD user data</a>
             </li>
-            <li className="nav-item">
-              <a cclassName="nav-link" href="#">etc.....</a>
-            </li>
-          </ul>
+          </ul></div>
+          {content}
         </div>
       </div>
     );
   };
 }
+
 
 class LocationsList extends React.Component {
   constructor(props) {
