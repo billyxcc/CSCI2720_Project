@@ -3,8 +3,8 @@ import React, { Component } from 'react';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Switch, Link, useParams } from 'react-router-dom';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import GoogleMap from './googleMap';
-import SmallMap from './smallMap';
+import GoogleMap from './Map/googleMap';
+import SmallMap from './Map/smallMap';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 function render_fun(result) {
   document.open();
