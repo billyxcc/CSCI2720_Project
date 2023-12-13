@@ -2,7 +2,7 @@ import ReactDOM from 'react-dom/client'
 import React, { Component } from 'react';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Switch, Link, useParams } from 'react-router-dom';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaRegStar, FaStar } from 'react-icons/fa';
 import GoogleMap from './Map/googleMap';
 import SmallMap from './Map/smallMap';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
@@ -771,6 +771,7 @@ function Location({ match }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [favouriteLocations, setFavouriteLocations] = useState([]);
+  const [rating, setRating] = useState(0);
   const { locationId } = useParams();
 
   useEffect(() => {
@@ -873,11 +874,20 @@ function Location({ match }) {
       <div className="row">
         <div className="col">
           <h1>{location.name}</h1>
-          {favouriteLocations.find(favLocation => favLocation._id === location._id) ?
-            <FaHeart onClick={handleFavouriteClick} style={{ color: 'red' }} />
-            :
-            <FaRegHeart onClick={handleFavouriteClick} />
-          }
+          <div style={{display:"flex", alignItems:"center", marginBottom:"20px"}}>
+            {favouriteLocations.find(favLocation => favLocation._id === location._id) ?
+              <FaHeart onClick={handleFavouriteClick} style={{ color: 'red' }} />
+              :
+              <FaRegHeart onClick={handleFavouriteClick} />
+            }
+            <div style={{marginLeft:"15px"}}>
+              {(rating>0)?<FaStar onClick={()=>setRating(1)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(1)}/>}
+              {(rating>1)?<FaStar onClick={()=>setRating(2)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(2)}/>}
+              {(rating>2)?<FaStar onClick={()=>setRating(3)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(3)}/>}
+              {(rating>3)?<FaStar onClick={()=>setRating(4)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(4)}/>}
+              {(rating>4)?<FaStar onClick={()=>setRating(5)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(5)}/>}
+            </div>
+          </div>  
           <div style={{width:"200px",height:"200px"}}>
             <SmallMap lat= {location.latitude} lng = {location.longitude} name = {location.name}/>
           </div>
