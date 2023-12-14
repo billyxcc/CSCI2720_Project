@@ -197,7 +197,7 @@ db.once('open', function () {
         const locationsWithCount = locations.map(location => ({
           ...location._doc,
           count: location.events.length,
-        }));
+        })).filter(location => location.count >= 3 && location.latitude && location.longitude).slice(0, 10);
         res.json(locationsWithCount);
       })
       .catch((error) => {
