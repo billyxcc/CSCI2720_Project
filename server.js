@@ -197,8 +197,16 @@ db.once('open', function () {
         const locationsWithCount = locations.map(location => ({
           ...location._doc,
           count: location.events.length,
-        })).filter(location => location.count >= 3 && location.latitude && location.longitude).slice(0, 10);
-        res.json(locationsWithCount);
+        })).filter(location => location.count >= 3 && location.latitude && location.longitude);
+  
+        const uniqueLocations = locationsWithCount.reduce((unique, location) => {
+          if (!unique.some(loc => loc.latitude === location.latitude && loc.longitude === location.longitude)) {
+            unique.push(location);
+          }
+          return unique;
+        }, []).slice(0, 10);
+  
+        res.json(uniqueLocations);
       })
       .catch((error) => {
         console.error(error);
