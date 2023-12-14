@@ -624,15 +624,76 @@ db.once('open', function () {
     const Description = req.body.Description;
     const Presenter = req.body.Presenter;
     const Price = req.body.Price;
-    console.log('23')
     Location.find({name:{$eq: eventLocation}})
     .then((data) => {
       const loc_id = data[0]._id;
       Event.findOneAndUpdate({eventId:{$eq: eventId}}, {title: Title, location:loc_id, dateTime:dateTime, description: Description, presenter: Presenter, price: Price},{new: true})
-      .then((data)=> res.send("Updated Successfully!"))
+      .then((data)=> {res.setHeader('Content-Type', 'application/json');res.send(data)})
       .catch((err) => console.log(err))
   
    }) })
+
+   app.get('/admin/user', (req,res)=>{
+    User.find({})
+    .then((data)=> {res.setHeader('Content-Type', 'application/json');res.send(data)})
+    .catch((err)=> console.log(err))
+   })
+
+   app.delete('/admin/user/:userName', (req,res)=>{
+    const userName = req.params.userName;
+    User.findOneAndDelete({UserName: {$eq: userName}})
+    .then((data)=> res.send("Successfully Deleted."))
+    .catch((err) => console.log(err))
+   })
+
+   app.put('/admin/user/update', (req,res)=>{
+    const _id = req.body._id;
+    const UserName = req.body.UserName;
+    const PassWord = req.body.PassWord;
+    User.find({ UserName: { $eq:  UserName } })
+    .then((data)=>{
+      if(data.length == 0){
+        User.findOneAndUpdate({_id: {$eq: _id}}, {UserName: UserName, PassWord: PassWord}, {new: true})
+        .then((data)=> res.send("Updated Successfully."))
+        .catch((err)=> console.log(err))
+      } else {
+        console.log(data)
+        let x = data[0]['_id'].toString();
+        let y = _id.toString()
+        if(x === y){
+          User.findOneAndUpdate({_id: {$eq: _id}}, {UserName: UserName, PassWord: PassWord}, {new: true})
+          .then((data)=> res.send("Updated Successfully."))
+          .catch((err)=> console.log(err))
+        }else {
+        res.send("This user name is already used.")}
+      }
+    })
+   })
+
+   app.put('/admin/user/create', (req,res)=>{
+    const UserName = req.body.UserName;
+    const PassWord = req.body.PassWord;
+    let newUser = new User({
+      UserName: UserName,
+      PassWord: PassWord,
+      Current_login: false,
+      favourite_locations: []
+    })
+    User.find({ UserName: { $eq:  UserName } })
+      .then((data) => {
+        if (data.length == 0) {
+          newUser
+          .save()
+          .then((data) => res.send("Created Successfully."))
+          .catch((err) => console.log(err))
+        } else {
+          res.send("This username is already used.")
+        }
+   })
+   .catch((err)=> console.log(err))
+  })
+
+
 });
 
 const server = app.listen(80);
