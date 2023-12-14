@@ -6,6 +6,7 @@ import { FaHeart, FaRegHeart, FaRegStar, FaStar } from 'react-icons/fa';
 import GoogleMap from './Map/googleMap';
 import SmallMap from './Map/smallMap';
 import Rating from './Rating';
+import welcome_page from './images.jpg';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 
 var login_username;
@@ -157,15 +158,25 @@ class Navigation extends React.Component {
 class Home extends React.Component {
   render() {
     return (
-      <div className="px-4 pt-5 my-5 text-center border-bottom">
-        <h1 className="display-4 fw-bold text-body-emphasis">Culture.io(暫定)</h1>
+      <div style={{ backgroundImage: `url(${welcome_page})`, backgroundSize: 'cover',   width: '100'}}>
+      <div className="text-center border-bottom" style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ width: '30vw', height: '55vh', color:'#ffffff' , fontFamily: 'Arial, sans-serif'}} >
+        <p className="display-4 fw-bold" style={{
+    fontFamily: 'Arial, sans-serif',
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textShadow: '2px 2px 4px rgba(255, 255, 255, 0.5)',
+  }}>Culture.io</p>
         <div className="col-lg-6 mx-auto">
-          <p className="lead mb-4">Welcome to our website, Please log in to use our app.
+          <p className="lead mb-4" style={{fontFamily: 'Arial, sans-serif',fontSize: '20px',
+          fontWeight: 'bold',color: '#ffffff',textShadow: '2px 2px 4px rgba(255, 255, 255, 0.5)'}}>Welcome to our website!
           </p>
           <div className="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
             <button type="button" className="btn btn-primary btn-lg px-4 me-sm-3" onClick={(e) => window.location.href = '/login'}>Log In</button>
-            <button type="button" className="btn btn-outline-secondary btn-lg px-4" onClick={(e) => window.location.href = '/signup'}>Sign Up</button>
+            <button type="button" className="btn btn-info btn-lg px-4" onClick={(e) => window.location.href = '/signup'}>Sign Up</button>
           </div>
+         </div>
+        </div>
         </div>
       </div>
     );
@@ -176,8 +187,10 @@ class Login extends React.Component {
 
   render() {
     return (
+      <div style={{ backgroundImage: `url(${welcome_page})`, backgroundSize: 'cover',   width: '100vw', height: '100vh'}}>
       <div class="vh-100">
         <Login_form />
+      </div>
       </div>
     );
   };
@@ -259,8 +272,10 @@ class Login_form extends React.Component {
 class Sign_up extends React.Component {
   render() {
     return (
-      <div className="vh-100" >
-        <Sign_up_form />
+      <div style={{ backgroundImage: `url(${welcome_page})`, backgroundSize: 'cover',   width: '100vw', height: '100vh'}}>
+       <div className="vh-100" >
+         <Sign_up_form />
+       </div>
       </div>
     );
   };
