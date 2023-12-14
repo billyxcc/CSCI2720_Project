@@ -141,6 +141,22 @@ db.once('open', function () {
   const Comment = mongoose.model("Comment", CommentSchema);
   const Rating = mongoose.model("Rating", RatingSchema);
 
+  //creata an admin account
+  let Admin_ac = new Admin({
+    UserName: 'testingadmin',
+    PassWord: 'testingadmin',
+    Current_login: false
+  });
+
+  Admin.find({UserName: {$eq: 'testingadmin'}})
+  .then((data) => {
+    if(data.length == 0){
+      Admin_ac.save()
+      .then((data)=> console.log("Admin account created successfully."))
+      .catch((err)=> console.log(err))
+    }
+  })
+
   // load locations data from venues.xml into database
   const fs = require('fs');
   const xml2js = require('xml2js');
