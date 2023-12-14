@@ -441,7 +441,6 @@ class CRUDEventData extends React.Component{
     }
 
     DeleteEvent(eventId){
-      console.log(eventId)
       const del = fetch(`http://localhost:80/admin/event/del/${eventId}`, {method:'Delete'}).catch((err)=>console.log(err))
       this.setState({one_ev : 0})
       this.showevent()
@@ -498,8 +497,10 @@ class CRUDEventData extends React.Component{
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-      });
-      this.componentDidMount() 
+      })
+      .then((response) =>response.json())
+      .then((data) => this.setState({one_ev: data}))
+      this.componentDidMount()
       document.getElementById('formupdate_message').innerHTML = "Successfully updated!"
       window.scrollTo({
         top: document.documentElement.scrollHeight,
@@ -545,7 +546,9 @@ class CRUDEventData extends React.Component{
               </form><br/>
         </div>
         <div>
+          
           <table className="table table-striped table-hover">
+          <thead ><tr><th><h5>Choose a location here:</h5></th></tr></thead>
           <tbody>
             {this.state.locNamelist.map((location, index) => (
               <tr key={index}>
@@ -591,7 +594,7 @@ class CRUDEventData extends React.Component{
       </table>
       <button onClick={()=>this.DeleteEvent(this.state.one_ev['eventId'])}>Delete this Event!</button><br />
       <div>
-          <h3>Update the Event:</h3>
+          <br/><h3>Update the Event:</h3>
           <form id="Form_of_Admin_update_event"  onSubmit={this.Submit_eventUpdate}>
               <label for="eventId_update" style={{ marginRight: '39px' }}>EventId:</label>
               <input type="text" id="eventId_update" name="eventId_update" value={this.state.one_ev["eventId"]} disabled></input>
@@ -630,10 +633,162 @@ class CRUDEventData extends React.Component{
   }
 
 class CRUDUserData extends React.Component{
+  constructor(props) {
+    super(props);
+    this.state = {
+      userdata : [],
+      needDisplay: 0,
+      update_userid: 0,
+      selectedUser : 'null',
+      selecteduser_forupdate: 'null'
+    };
+    this.showuser = this.showuser.bind(this)
+  }
+
+  componentDidMount() {
+    this.showuser();
+  }
+
+
+
+  showuser(){
+    const location_event = fetch('http://localhost:80/admin/user', {method: 'GET'})
+    .then((response) => response.json())
+    .then((data =>{
+      this.setState({ userdata: data });
+    }))
+    .catch((err) => console.log(err))}
+
+  Del_user(userName){
+      const request = fetch(`http://localhost:80/admin/user/${userName}`, {method: 'Delete'})
+      .then((data)=>this.componentDidMount())
+    }
+
+  UserUpdate(user){
+    const userId = user['_id']
+    const userName = user['UserName']
+    const userPassword = user['PassWord']
+    this.setState({needDisplay: 1})
+    this.setState({ update_userid: userId})
+    this.setState({selecteduser_forupdate: user}, ()=>this.showuser())
+    document.getElementById('userformupdate_message').innerHTML =""
+    console.log(this.state.selecteduser_forupdate)
+    document.getElementById('Update_username').value = userName
+    document.getElementById('userpasswordupdate').value = userPassword
+
+  }
+
+  Submit_userUpdate = async(event) =>{
+    event.preventDefault();
+    const UserName = document.getElementById('Update_username').value
+    const UserPassword = document.getElementById('userpasswordupdate').value;
+    const data ={
+      _id: this.state.update_userid,
+      UserName : UserName,
+      PassWord : UserPassword
+    } 
+
+    const response = await fetch(`http://localhost:80/admin/user/update`, { 
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+
+    if (response.ok) {
+      const message = await response.text();
+      if(message == "Updated Successfully."){
+        document.getElementById('userformupdate_message2').innerHTML ="";
+        document.getElementById('userformupdate_message').innerHTML = message;
+        setTimeout(()=>document.getElementById('userformupdate_message').innerHTML ="", 3000)
+      } else {
+        document.getElementById('userformupdate_message').innerHTML ="";
+        document.getElementById('userformupdate_message2').innerHTML = message;
+        setTimeout(()=>document.getElementById('userformupdate_message2').innerHTML ="", 3000)
+      }}
+    this.componentDidMount()
+    this.setState({needDisplay: 0})
+  }
+
+  CreateUser = async(event) =>{
+    event.preventDefault();
+    const UserName = document.getElementById('usernamecreate').value
+    const UserPassword = document.getElementById('userpasswordcreate').value;
+    const data ={
+      UserName : UserName,
+      PassWord : UserPassword
+    }
+    const response = await fetch(`http://localhost:80/admin/user/create`, { 
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+
+    if (response.ok) {
+      const message = await response.text();
+      if(message == "Created Successfully."){
+        document.getElementById("responsemes2").innerHTML = ""
+        document.getElementById("responsemes").innerHTML = message;
+        setTimeout(()=> document.getElementById("responsemes").innerHTML = "", 3000)
+      } else {
+        document.getElementById("responsemes").innerHTML = ""
+        document.getElementById("responsemes2").innerHTML = message;
+        setTimeout(()=> document.getElementById("responsemes2").innerHTML = "", 3000)
+      }
+    this.componentDidMount()
+  }}
+
   render(){
     return(
-      <h1>we</h1>
-    )
+      <div className="col">
+        <div>
+          <h3>Create a New User:</h3>
+          <form id="Form_of_Admin_User" onSubmit={this.CreateUser} >
+              <label for="usernamecreate"style={{ marginRight: '30px' }}>Username:</label>
+              <input type="text" id="usernamecreate" name="usernamecreate" required></input>
+              <br/>
+              <label for="userpasswordcreate" style={{ marginRight: '32px' }}>Password:</label>
+              <input type="text"  id="userpasswordcreate" name="userpasswordcreate" required></input>
+              <br/>
+              <input type="submit" value="Submit" id="submit" ></input><h5 id='form_user_message'></h5>
+              </form>
+        </div>
+        <br/><h4 id="responsemes"></h4><h4 id="responsemes2"></h4>
+        <div>
+          <form id="userUpdateForm" style={{ display: this.state.needDisplay ? 'block' : 'none' }} onSubmit={this.Submit_userUpdate}>
+              <label for="usernameupdate" style={{ marginRight: '30px' }}>Updated_Username:</label>
+              <input type="text" id="Update_username" name="usernameupdate" required></input>
+              <br/>
+              <label for="userpasswordupdate" style={{ marginRight: '30px' } }>Updated_Password:</label>
+              <input type="text"  id="userpasswordupdate" name="userpasswordupdate" required></input>
+              <input type="submit" value="Submit" id="submit" ></input>
+          </form>
+          <h4 id="userformupdate_message"></h4><h4 id="userformupdate_message2"></h4>
+        </div>
+        <div>
+          <table className="table table-striped table-hover">
+          <thead><tr><th style={{ backgroundColor: "#766782", color: "#ffffff", textAlign: "left" }}>User_Name</th>
+          <th style={{ backgroundColor: "#766782", color: "#ffffff", textAlign: "left" }}>User_Password</th>
+          <th style={{ backgroundColor: "#766782", color: "#ffffff", textAlign: "left" }}>Delete</th>
+          <th style={{ backgroundColor: "#766782", color: "#ffffff", textAlign: "left" }}>Update</th></tr></thead>
+          <tbody>
+            {this.state.userdata.map((user, index) => (
+                <tr>
+                <td>{user['UserName']}</td>
+                <td>{user['PassWord']}</td>
+                <td><button type="button" class="btn btn-danger" onClick={()=>this.Del_user(`${user['UserName']}`)}>Delete</button></td>
+                <td><button type="button" class="btn btn-info" onClick={()=>this.UserUpdate(user)}>Update</button></td>
+                </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+      </div>
+      )
+    
   }
 }
 
@@ -684,8 +839,6 @@ class Admin extends React.Component {
     );
   };
 }
-
-
 class LocationsList extends React.Component {
   constructor(props) {
     super(props);
