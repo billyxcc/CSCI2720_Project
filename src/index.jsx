@@ -327,19 +327,6 @@ class User extends React.Component {
       activeLink: 'Active',
     };
   }
-
-  handleActions1Click = () => {
-    this.setState({ activeLink: 'actions 1' });
-  };
-
-  handleActions2Click = () => {
-    this.setState({ activeLink: 'actions 2' });
-  };
-
-  handleActions3Click = () => {
-    this.setState({ activeLink: 'actions 3' });
-  }
-
   clickActionHandler = (activeLinkStr) => {
     this.setState({ activeLink: activeLinkStr });
   }
@@ -362,13 +349,13 @@ class User extends React.Component {
         <div style={{ display: i }}>
           <ul className="nav nav-tabs">
             <li className="nav-item">
-              <Link className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} to="/user/locations" onClick={this.handleActions1Click}>Locations</Link>
+              <Link className={`nav-link ${this.state.activeLink === 'actions 1' ? 'active' : ''}`} to="/user/locations" onClick={()=>{this.clickActionHandler('actions 1');}}>Locations</Link>
             </li>
             <li className="nav-item">
-              <Link className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} to="/user/events" onClick={this.handleActions2Click}>Events</Link>
+              <Link className={`nav-link ${this.state.activeLink === 'actions 2' ? 'active' : ''}`} to="/user/events" onClick={()=>{this.clickActionHandler('actions 2');}}>Events</Link>
             </li>
             <li className="nav-item">
-              <Link className={`nav-link ${this.state.activeLink === 'actions 3' ? 'active' : ''}`} to="/user/favourites" onClick={this.handleActions3Click}>Favourite Locations</Link>
+              <Link className={`nav-link ${this.state.activeLink === 'actions 3' ? 'active' : ''}`} to="/user/favourites" onClick={()=>{this.clickActionHandler('actions 3');}}>Favourite Locations</Link>
             </li>
             <li className="nav-item">
               <Link className={`nav-link ${this.state.activeLink === 'actions 4' ? 'active' : ''}`} to="/user/map" onClick={()=>{this.clickActionHandler('actions 4');}}>Map</Link>
