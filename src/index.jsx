@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Switch, Link, useParams } from 'react-rou
 import { FaHeart, FaRegHeart, FaRegStar, FaStar } from 'react-icons/fa';
 import GoogleMap from './Map/googleMap';
 import SmallMap from './Map/smallMap';
+import Rating from './Rating';
 // import { useMatch, useParams, useLocation } from 'react-router-dom';
 
 var login_username;
@@ -1021,11 +1022,7 @@ function Location({ match }) {
               <FaRegHeart onClick={handleFavouriteClick} />
             }
             <div style={{marginLeft:"15px"}}>
-              {(rating>0)?<FaStar onClick={()=>setRating(1)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(1)}/>}
-              {(rating>1)?<FaStar onClick={()=>setRating(2)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(2)}/>}
-              {(rating>2)?<FaStar onClick={()=>setRating(3)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(3)}/>}
-              {(rating>3)?<FaStar onClick={()=>setRating(4)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(4)}/>}
-              {(rating>4)?<FaStar onClick={()=>setRating(5)} style={{ color: 'gold' }}/>:<FaRegStar onClick={()=>setRating(5)}/>}
+              <Rating locId={locationId}/>
             </div>
           </div>  
           <div style={{width:"200px",height:"200px"}}>

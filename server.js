@@ -118,11 +118,28 @@ db.once('open', function () {
     }
   });
 
+  const RatingSchema = mongoose.Schema({
+    ratingId: {
+      type: Number,
+      required: true,
+      unique: true
+    },
+    value: {
+      type: Number,
+      required: true
+    },
+    locId: {
+      type: Number,
+      required: true
+    }
+  });
+
   const User = mongoose.model("User", UserSchema);
   const Admin = mongoose.model("Admin", AdminSchema);
   const Location = mongoose.model("Location", LocationSchema);
   const Event = mongoose.model("Event", EventSchema);
   const Comment = mongoose.model("Comment", CommentSchema);
+  const Rating = mongoose.model("Rating", RatingSchema);
 
   // load locations data from venues.xml into database
   const fs = require('fs');
@@ -370,8 +387,49 @@ db.once('open', function () {
       res.setHeader('Content-Type', 'text/plain');
       res.send(data);
     })
-    .catch((error) => console.log);
+    .catch((error) => console.log(error));
   })
+
+  //Get location rating
+  app.get("/rating/:locId", (req,res) => {
+    const id = req.params.locId;
+    console.log("Id: " + id);
+    Rating.find({locId: {$eq: id}})
+    .then((data) => {
+      if(data.length > 0){
+        var totalRating = 0;
+        data.forEach(rating => {
+          totalRating += rating.value;
+        });
+        res.json({ averageRating: totalRating/data.length });
+      }else{
+        res.json({ averageRating: 0 });
+      }
+    })
+    .catch((err) => console.log(err));
+  });
+
+  app.post("/rating/:locId", (req,res)=>{
+    const locId = req.params.locId;
+    const ratingData = req.body;
+    const value = ratingData.value;
+
+    Rating.find()
+    .sort({ratingId: -1})
+    .limit(1)
+    .then((data) => {
+      const ratingId = (data.length > 0)?(data[0].ratingId+1):0;
+      let rating = new Rating({
+        ratingId: ratingId,
+        value: value,
+        locId: locId
+      });
+      
+      rating
+      .save()
+      .then(res.send("201"));
+    });
+  });
 
 
   //Sign-up
