@@ -1300,6 +1300,9 @@ class NoMatch extends React.Component {
   }
 }
 
+window.addEventListener("beforeunload", function (e) {
+  fetch('http://localhost:80/logout');
+});
 
 const root = ReactDOM.createRoot(document.querySelector("#app"));
 root.render(<App name="Project" />);
