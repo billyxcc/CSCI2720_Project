@@ -551,7 +551,7 @@ class CRUDEventData extends React.Component{
         <div>
           
           <table className="table table-striped table-hover">
-          <thead ><tr><th><h5>Choose a location here:</h5></th></tr></thead>
+          <thead ><tr><th style={{backgroundColor: '#6598BA '}}><h5 style={{color: '#ffffff '}}>Choose a location here:</h5></th></tr></thead>
           <tbody>
             {this.state.locNamelist.map((location, index) => (
               <tr key={index}>
