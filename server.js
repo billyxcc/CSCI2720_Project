@@ -21,6 +21,7 @@ db.once('open', function () {
     UserName: {
       type: String,
       required: [true, "Username is required"],
+      unique:true
     },
     PassWord: {
       type: String,
